@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 export const appointmentFormSchema = z.object({
-    patientId: z.string().uuid('Invalid patient'),
-    doctorId: z.string().uuid('Invalid doctor'),
+    patientId: z.string().min(1, 'Patient is required'),
+    doctorId: z.string().min(1, 'Doctor is required'),
     scheduledAt: z.coerce.date({ message: 'Appointment date is required' }),
     duration: z.number().min(15).max(240).default(30),
     type: z.enum(['CHECKUP', 'TREATMENT', 'EMERGENCY', 'FOLLOW_UP', 'CONSULTATION']),

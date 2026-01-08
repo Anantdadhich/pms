@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input"
 interface HeaderProps {
     title: string
     description?: string
+    children?: React.ReactNode
     action?: {
         label: string
         onClick: () => void
     }
 }
 
-export function Header({ title, description, action }: HeaderProps) {
+export function Header({ title, description, children, action }: HeaderProps) {
     return (
         <header className="flex h-16 items-center justify-between border-b bg-background px-6">
             <div>
@@ -40,6 +41,8 @@ export function Header({ title, description, action }: HeaderProps) {
                         3
                     </span>
                 </Button>
+
+                {children}
 
                 {/* Primary action */}
                 {action && (

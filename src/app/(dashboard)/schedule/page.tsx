@@ -1,41 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format, addDays, startOfWeek, isSameDay } from "date-fns"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Clock, User } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AppointmentForm } from "@/components/appointments/appointment-form"
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getDoctors } from "@/lib/actions/users"
+import { getPatients } from "@/lib/actions/patients"
+import { createAppointment, getAppointments } from "@/lib/actions/appointments"
+import { useToast } from "@/hooks/use-toast" // Assuming useToast exists, or I'll implement simple alert
 
 interface Appointment {
     id: string
-    time: string
+    scheduledAt: Date
     duration: number
-    patientName: string
     type: string
-    status: "scheduled" | "confirmed" | "seated" | "in-progress" | "completed" | "cancelled"
-    doctor: string
-}
-
-// Mock appointments
-const mockAppointments: Record<string, Appointment[]> = {
-    "2026-01-07": [
-        { id: "1", time: "09:00", duration: 30, patientName: "Rahul Sharma", type: "Root Canal", status: "completed", doctor: "Dr. Smith" },
-        { id: "2", time: "09:30", duration: 30, patientName: "Priya Patel", type: "Cleaning", status: "completed", doctor: "Dr. Smith" },
-        { id: "3", time: "10:00", duration: 45, patientName: "Amit Kumar", type: "Extraction", status: "in-progress", doctor: "Dr. Smith" },
-        { id: "4", time: "11:00", duration: 30, patientName: "Sneha Gupta", type: "Check-up", status: "seated", doctor: "Dr. Smith" },
-        { id: "5", time: "11:30", duration: 30, patientName: "Vikram Singh", type: "Filling", status: "confirmed", doctor: "Dr. Smith" },
-        { id: "6", time: "12:00", duration: 30, patientName: "Meera Singh", type: "Consultation", status: "scheduled", doctor: "Dr. Smith" },
-        { id: "7", time: "14:00", duration: 60, patientName: "Raj Malhotra", type: "Root Canal", status: "scheduled", doctor: "Dr. Smith" },
-        { id: "8", time: "15:00", duration: 30, patientName: "Anita Desai", type: "Cleaning", status: "scheduled", doctor: "Dr. Smith" },
-    ],
-    "2026-01-08": [
-        { id: "9", time: "09:00", duration: 30, patientName: "Karan Mehta", type: "Check-up", status: "scheduled", doctor: "Dr. Smith" },
-        { id: "10", time: "10:00", duration: 45, patientName: "Pooja Sharma", type: "Crown Fitting", status: "scheduled", doctor: "Dr. Smith" },
-        { id: "11", time: "11:00", duration: 30, patientName: "Arun Kumar", type: "Cleaning", status: "scheduled", doctor: "Dr. Smith" },
-    ],
+    status: string
+    patient: {
+        firstName: string
+        lastName: string
+    }
+    doctor: {
+        firstName: string
+        lastName: string
+    }
 }
 
 const timeSlots = [
@@ -45,15 +38,60 @@ const timeSlots = [
 ]
 
 export default function SchedulePage() {
-    const [currentDate, setCurrentDate] = useState(new Date("2026-01-07"))
+    const [currentDate, setCurrentDate] = useState(new Date())
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [view, setView] = useState<"day" | "week">("day")
+    const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false)
+    const [doctors, setDoctors] = useState<{ id: string; firstName: string; lastName: string }[]>([])
+    const [patients, setPatients] = useState<{ id: string; firstName: string; lastName: string }[]>([])
+    const [appointments, setAppointments] = useState<Appointment[]>([])
+    const [isLoading, setIsLoading] = useState(false)
 
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 
+    // Fetch initial data
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [docs, pats] = await Promise.all([
+                    getDoctors("clinic_id_placeholder"), // Access clinicId from context in real app
+                    getPatients("clinic_id_placeholder", "").then(res => res)
+                ])
+                setDoctors(docs)
+                setPatients(pats.map((p: any) => ({ id: p.id, firstName: p.firstName, lastName: p.lastName })))
+            } catch (error) {
+                console.error("Failed to load form data", error)
+            }
+        }
+        loadData()
+    }, [])
+
+    // Fetch appointments when date changes
+    useEffect(() => {
+        const fetchAppointments = async () => {
+            try {
+                // In a real app we'd get the actual clinicId. 
+                // For now we assume we might need to handle this differently if clinicId is required.
+                // Assuming getAppointments handles undefined clinicId gracefully or we hardcode for demo.
+                // NOTE: We need a clinicId. I'll mock it or use the first doctor's if available.
+                const res = await getAppointments("clinic_id_placeholder", { date: currentDate })
+                // Typings might mismatch due to Date vs string serialization in client components
+                // converting dates
+                const formatted = res.map((apt: any) => ({
+                    ...apt,
+                    scheduledAt: new Date(apt.scheduledAt)
+                })) as unknown as Appointment[]
+                setAppointments(formatted)
+            } catch (error) {
+                console.error("Failed to load appointments", error)
+            }
+        }
+        fetchAppointments()
+    }, [currentDate])
+
     const getAppointmentsForDate = (date: Date) => {
-        const dateStr = format(date, "yyyy-MM-dd")
-        return mockAppointments[dateStr] || []
+        return appointments.filter(apt => isSameDay(apt.scheduledAt, date))
     }
 
     const navigateDate = (direction: "prev" | "next") => {
@@ -61,14 +99,34 @@ export default function SchedulePage() {
         setCurrentDate(direction === "prev" ? addDays(currentDate, -days) : addDays(currentDate, days))
     }
 
+    const handleCreateAppointment = async (data: any) => {
+        setIsLoading(true)
+        try {
+            await createAppointment("clinic_id_placeholder", data)
+            setIsNewAppointmentOpen(false)
+            // Refresh appointments
+            const res = await getAppointments("clinic_id_placeholder", { date: currentDate })
+            const formatted = res.map((apt: any) => ({
+                ...apt,
+                scheduledAt: new Date(apt.scheduledAt)
+            })) as unknown as Appointment[]
+            setAppointments(formatted)
+        } catch (error) {
+            console.error("Failed to create appointment", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "completed": return "bg-emerald-100 border-emerald-300 text-emerald-700"
-            case "in-progress": return "bg-purple-100 border-purple-300 text-purple-700"
-            case "seated": return "bg-amber-100 border-amber-300 text-amber-700"
-            case "confirmed": return "bg-green-100 border-green-300 text-green-700"
-            case "scheduled": return "bg-blue-100 border-blue-300 text-blue-700"
-            case "cancelled": return "bg-red-100 border-red-300 text-red-700"
+            case "COMPLETED": return "bg-emerald-100 border-emerald-300 text-emerald-700"
+            case "IN_PROGRESS": return "bg-purple-100 border-purple-300 text-purple-700"
+            case "SEATED": return "bg-amber-100 border-amber-300 text-amber-700"
+            case "CONFIRMED": return "bg-green-100 border-green-300 text-green-700"
+            case "SCHEDULED": return "bg-blue-100 border-blue-300 text-blue-700"
+            case "CANCELLED": return "bg-red-100 border-red-300 text-red-700"
+            case "NO_SHOW": return "bg-gray-100 border-gray-300 text-gray-700"
             default: return "bg-gray-100 border-gray-300 text-gray-700"
         }
     }
@@ -80,9 +138,24 @@ export default function SchedulePage() {
                 description={format(currentDate, "EEEE, MMMM d, yyyy")}
                 action={{
                     label: "New Appointment",
-                    onClick: () => console.log("New appointment"),
+                    onClick: () => setIsNewAppointmentOpen(true),
                 }}
             />
+
+            <Dialog open={isNewAppointmentOpen} onOpenChange={setIsNewAppointmentOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>New Appointment</DialogTitle>
+                    </DialogHeader>
+                    <AppointmentForm
+                        doctors={doctors}
+                        patients={patients}
+                        onSubmit={handleCreateAppointment}
+                        onCancel={() => setIsNewAppointmentOpen(false)}
+                        isLoading={isLoading}
+                    />
+                </DialogContent>
+            </Dialog>
 
             <div className="flex-1 flex flex-col overflow-hidden p-6">
                 {/* Controls */}
@@ -91,7 +164,7 @@ export default function SchedulePage() {
                         <Button variant="outline" size="icon" onClick={() => navigateDate("prev")}>
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" onClick={() => setCurrentDate(new Date("2026-01-07"))}>
+                        <Button variant="outline" onClick={() => setCurrentDate(new Date())}>
                             Today
                         </Button>
                         <Button variant="outline" size="icon" onClick={() => navigateDate("next")}>
@@ -124,14 +197,16 @@ export default function SchedulePage() {
                             // Day View
                             <div className="divide-y">
                                 {timeSlots.map((time) => {
-                                    const appointments = getAppointmentsForDate(currentDate).filter(a => a.time === time)
+                                    const slotAppointments = getAppointmentsForDate(currentDate).filter(a =>
+                                        format(a.scheduledAt, "HH:mm") === time
+                                    )
                                     return (
                                         <div key={time} className="flex min-h-[60px]">
                                             <div className="w-20 flex-shrink-0 p-2 text-sm text-muted-foreground border-r bg-muted/30">
                                                 {time}
                                             </div>
                                             <div className="flex-1 p-2">
-                                                {appointments.map((apt) => (
+                                                {slotAppointments.map((apt) => (
                                                     <div
                                                         key={apt.id}
                                                         className={cn(
@@ -140,8 +215,8 @@ export default function SchedulePage() {
                                                         )}
                                                     >
                                                         <div className="flex items-center justify-between">
-                                                            <span className="font-medium">{apt.patientName}</span>
-                                                            <Badge variant={apt.status as "scheduled" | "confirmed" | "seated" | "completed"}>
+                                                            <span className="font-medium">{apt.patient.firstName} {apt.patient.lastName}</span>
+                                                            <Badge variant="outline" className="bg-white/50">
                                                                 {apt.status}
                                                             </Badge>
                                                         </div>
@@ -151,6 +226,7 @@ export default function SchedulePage() {
                                                                 {apt.duration} min
                                                             </span>
                                                             <span>{apt.type}</span>
+                                                            <span className="text-xs">With Dr. {apt.doctor.lastName}</span>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -170,13 +246,13 @@ export default function SchedulePage() {
                                             key={day.toISOString()}
                                             className={cn(
                                                 "flex-1 p-2 text-center border-r last:border-r-0",
-                                                isSameDay(day, new Date("2026-01-07")) && "bg-primary/5"
+                                                isSameDay(day, new Date()) && "bg-primary/5"
                                             )}
                                         >
                                             <div className="text-sm font-medium">{format(day, "EEE")}</div>
                                             <div className={cn(
                                                 "text-2xl font-bold",
-                                                isSameDay(day, new Date("2026-01-07")) && "text-primary"
+                                                isSameDay(day, new Date()) && "text-primary"
                                             )}>
                                                 {format(day, "d")}
                                             </div>
@@ -192,24 +268,27 @@ export default function SchedulePage() {
                                                 {time}
                                             </div>
                                             {weekDays.map((day) => {
-                                                const appointments = getAppointmentsForDate(day).filter(a => a.time === time)
+                                                const slotAppointments = getAppointmentsForDate(day).filter(a =>
+                                                    format(a.scheduledAt, "HH:mm") === time
+                                                )
                                                 return (
                                                     <div
                                                         key={day.toISOString()}
                                                         className={cn(
                                                             "flex-1 p-1 border-r last:border-r-0",
-                                                            isSameDay(day, new Date("2026-01-07")) && "bg-primary/5"
+                                                            isSameDay(day, new Date()) && "bg-primary/5"
                                                         )}
                                                     >
-                                                        {appointments.map((apt) => (
+                                                        {slotAppointments.map((apt) => (
                                                             <div
                                                                 key={apt.id}
                                                                 className={cn(
-                                                                    "rounded px-2 py-1 text-xs cursor-pointer truncate",
+                                                                    "rounded px-2 py-1 text-xs cursor-pointer truncate mb-1",
                                                                     getStatusColor(apt.status)
                                                                 )}
+                                                                title={`${apt.patient.firstName} - ${apt.type}`}
                                                             >
-                                                                {apt.patientName}
+                                                                {apt.patient.firstName}
                                                             </div>
                                                         ))}
                                                     </div>

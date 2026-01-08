@@ -19,7 +19,7 @@ model Clinic {
   address   String?
   phone     String?
   email     String?
-  settings  Json?    // Clinic-specific settings (timezone, currency, etc.)
+  settings  Json? // Clinic-specific settings (timezone, currency, etc.)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -78,10 +78,10 @@ model Patient {
   email          String?
   phone          String
   dateOfBirth    DateTime
-  gender         String?   // "Male", "Female", "Other"
+  gender         String? // "Male", "Female", "Other"
   address        String?
-  medicalHistory Json?     // Structured: { conditions: [], medications: [], surgeries: [] }
-  allergies      String[]  // Array of allergies
+  medicalHistory Json? // Structured: { conditions: [], medications: [], surgeries: [] }
+  allergies      String[] // Array of allergies
   notes          String?
   lastVisitDate  DateTime?
   createdAt      DateTime  @default(now())
@@ -137,7 +137,7 @@ model Appointment {
   patient   Patient @relation(fields: [patientId], references: [id])
 
   doctorId String
-  doctor   User @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  doctor   User   @relation("DoctorAppointments", fields: [doctorId], references: [id])
 
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
@@ -159,8 +159,8 @@ model Appointment {
 
 model ClinicalRecord {
   id           String   @id @default(uuid())
-  toothNumber  String?  // FDI notation: "18", "21", etc.
-  surface      String?  // "MOD", "B", "L", "O", "D", "M"
+  toothNumber  String? // FDI notation: "18", "21", etc.
+  surface      String? // "MOD", "B", "L", "O", "D", "M"
   diagnosis    String?
   notes        String?
   costOverride Decimal? // Manual price override
@@ -177,7 +177,7 @@ model ClinicalRecord {
   procedure   TreatmentCatalog @relation(fields: [procedureId], references: [id])
 
   createdById String
-  createdBy   User @relation(fields: [createdById], references: [id])
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
   // Relations
   invoiceItem InvoiceItem?
@@ -193,12 +193,12 @@ model ClinicalRecord {
 
 model TreatmentCatalog {
   id           String   @id @default(uuid())
-  code         String?  // Service code (e.g., "D2391")
-  name         String   // "Root Canal (Molar)"
+  code         String? // Service code (e.g., "D2391")
+  name         String // "Root Canal (Molar)"
   description  String?
   standardCost Decimal
-  category     String   // "Restorative", "Cosmetic", "Preventive", "Endodontic"
-  duration     Int?     // Estimated duration in minutes
+  category     String // "Restorative", "Cosmetic", "Preventive", "Endodontic"
+  duration     Int? // Estimated duration in minutes
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -232,7 +232,7 @@ model Invoice {
   invoiceNumber String        @unique
   subtotal      Decimal
   discount      Decimal       @default(0)
-  discountType  String?       // "percentage" or "fixed"
+  discountType  String? // "percentage" or "fixed"
   tax           Decimal       @default(0)
   total         Decimal
   amountPaid    Decimal       @default(0)
@@ -295,7 +295,7 @@ model Payment {
   id        String        @id @default(uuid())
   amount    Decimal
   method    PaymentMethod
-  reference String?       // Transaction ID, UPI ref, etc.
+  reference String? // Transaction ID, UPI ref, etc.
   notes     String?
   paidAt    DateTime      @default(now())
 
@@ -312,16 +312,16 @@ model Payment {
 
 model AuditLog {
   id         String   @id @default(uuid())
-  action     String   // "CREATE", "UPDATE", "DELETE"
-  entityType String   // "ClinicalRecord", "Invoice", etc.
+  action     String // "CREATE", "UPDATE", "DELETE"
+  entityType String // "ClinicalRecord", "Invoice", etc.
   entityId   String
   oldValue   Json?
   newValue   Json?
-  reason     String?  // For price overrides, etc.
+  reason     String? // For price overrides, etc.
   createdAt  DateTime @default(now())
 
   userId String
-  user   User @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
   @@index([entityType, entityId])
   @@index([userId])

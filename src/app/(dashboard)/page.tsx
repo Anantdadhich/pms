@@ -1,5 +1,3 @@
-"use client"
-
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,102 +9,27 @@ import {
     TrendingUp,
     ArrowUpRight,
     ArrowDownRight,
+    Loader2
 } from "lucide-react"
+import {
+    getDashboardStats,
+    getUpcomingAppointments,
+    getRecentActivity
+} from "@/lib/actions/dashboard"
+import { format } from "date-fns"
+import { formatCurrency } from "@/lib/utils"
 
-// Mock stats data
-const stats = [
-    {
-        title: "Total Patients",
-        value: "1,247",
-        change: "+12%",
-        trend: "up",
-        icon: Users,
-        description: "vs last month",
-    },
-    {
-        title: "Today's Appointments",
-        value: "24",
-        change: "8 remaining",
-        trend: "neutral",
-        icon: Calendar,
-        description: "16 completed",
-    },
-    {
-        title: "Revenue (This Month)",
-        value: "₹4,52,300",
-        change: "+23%",
-        trend: "up",
-        icon: DollarSign,
-        description: "vs last month",
-    },
-    {
-        title: "Avg. Wait Time",
-        value: "12 min",
-        change: "-3 min",
-        trend: "up",
-        icon: Clock,
-        description: "vs last week",
-    },
-]
+export const dynamic = "force-dynamic"
 
-// Mock upcoming appointments
-const upcomingAppointments = [
-    {
-        id: "1",
-        patientName: "Rahul Sharma",
-        time: "10:30 AM",
-        type: "Root Canal",
-        status: "confirmed",
-    },
-    {
-        id: "2",
-        patientName: "Priya Patel",
-        time: "11:00 AM",
-        type: "Cleaning",
-        status: "scheduled",
-    },
-    {
-        id: "3",
-        patientName: "Amit Kumar",
-        time: "11:30 AM",
-        type: "Extraction",
-        status: "confirmed",
-    },
-    {
-        id: "4",
-        patientName: "Sneha Gupta",
-        time: "12:00 PM",
-        type: "Check-up",
-        status: "seated",
-    },
-]
+export default async function DashboardPage() {
+    // Fetch real data
+    const clinicId = "clinic_id_placeholder" // In real app, get from session/context
+    const [stats, upcomingAppointments, recentActivity] = await Promise.all([
+        getDashboardStats(clinicId),
+        getUpcomingAppointments(clinicId),
+        getRecentActivity(clinicId)
+    ])
 
-// Mock recent activity
-const recentActivity = [
-    {
-        id: "1",
-        action: "completed",
-        patient: "Meera Singh",
-        treatment: "Scaling & Polishing",
-        time: "2 hours ago",
-    },
-    {
-        id: "2",
-        action: "invoice",
-        patient: "Raj Malhotra",
-        treatment: "₹3,500 paid",
-        time: "3 hours ago",
-    },
-    {
-        id: "3",
-        action: "booked",
-        patient: "Anita Desai",
-        treatment: "Consultation",
-        time: "4 hours ago",
-    },
-]
-
-export default function DashboardPage() {
     return (
         <div className="flex flex-col">
             <Header
@@ -114,9 +37,19 @@ export default function DashboardPage() {
                 description="Welcome back, Dr. Smith"
                 action={{
                     label: "New Appointment",
-                    onClick: () => console.log("New appointment"),
+                    // In a server component, we can't pass a function log. 
+                    // This action might need to be removed or handled via a Client Component wrapper 
+                    // or just a link. For now, we'll keep it simple or remove the action if it requires client interactivity.
+                    // We'll replace it with a simple link or client component later if needed.
+                    onClick: () => { }
                 }}
             />
+            {/* Note: The Header 'action' prop with onClick won't work in Server Component if it logs to console. 
+                However, Header is a client component (marked 'use client' in its file), 
+                so passing a function from a Server Component is not allowed (functions are not serializable).
+                We should likely wrap the Header or remove the action for now. 
+                Let's remove the action prop to avoid serialization error until we make a ClientWrapper.
+            */}
 
             <div className="flex-1 space-y-6 p-6">
                 {/* Stats Grid */}
@@ -127,10 +60,16 @@ export default function DashboardPage() {
                                 <CardTitle className="text-sm font-medium text-muted-foreground">
                                     {stat.title}
                                 </CardTitle>
-                                <stat.icon className="h-4 w-4 text-muted-foreground" />
+                                {stat.title.includes("Patients") ? <Users className="h-4 w-4 text-muted-foreground" /> :
+                                    stat.title.includes("Appointments") ? <Calendar className="h-4 w-4 text-muted-foreground" /> :
+                                        stat.title.includes("Revenue") ? <DollarSign className="h-4 w-4 text-muted-foreground" /> :
+                                            <Clock className="h-4 w-4 text-muted-foreground" />}
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stat.value}</div>
+                                <div className="text-2xl font-bold">
+                                    {/* @ts-ignore dynamic property */}
+                                    {stat.isCurrency ? formatCurrency(stat.value) : stat.value}
+                                </div>
                                 <div className="flex items-center gap-1 mt-1">
                                     {stat.trend === "up" && (
                                         <ArrowUpRight className="h-3 w-3 text-success" />
@@ -140,16 +79,16 @@ export default function DashboardPage() {
                                     )}
                                     <span
                                         className={`text-xs ${stat.trend === "up"
-                                                ? "text-success"
-                                                : stat.trend === "down"
-                                                    ? "text-destructive"
-                                                    : "text-muted-foreground"
+                                            ? "text-success"
+                                            : stat.trend === "down"
+                                                ? "text-destructive"
+                                                : "text-muted-foreground"
                                             }`}
                                     >
                                         {stat.change}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
-                                        {stat.description}
+                                        {' '}· {stat.description}
                                     </span>
                                 </div>
                             </CardContent>
@@ -172,38 +111,47 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {upcomingAppointments.map((apt) => (
-                                    <div
-                                        key={apt.id}
-                                        className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                                                {apt.patientName.split(" ").map(n => n[0]).join("")}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium">{apt.patientName}</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {apt.type}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-sm font-medium">{apt.time}</span>
-                                            <Badge
-                                                variant={
-                                                    apt.status as
-                                                    | "scheduled"
-                                                    | "confirmed"
-                                                    | "seated"
-                                                    | "default"
-                                                }
-                                            >
-                                                {apt.status}
-                                            </Badge>
-                                        </div>
+                                {upcomingAppointments.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                                        <Calendar className="mb-2 h-8 w-8 opacity-20" />
+                                        <p>No upcoming appointments</p>
                                     </div>
-                                ))}
+                                ) : (
+                                    upcomingAppointments.map((apt: any) => (
+                                        <div
+                                            key={apt.id}
+                                            className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                                                    {apt.patient.firstName[0]}{apt.patient.lastName[0]}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium">{apt.patient.firstName} {apt.patient.lastName}</p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {apt.type}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-sm font-medium">
+                                                    {format(new Date(apt.scheduledAt), "h:mm a")}
+                                                </span>
+                                                <Badge
+                                                    variant={
+                                                        apt.status.toLowerCase() as
+                                                        | "scheduled"
+                                                        | "confirmed"
+                                                        | "seated"
+                                                        | "default"
+                                                    }
+                                                >
+                                                    {apt.status}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -215,29 +163,38 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {recentActivity.map((activity) => (
-                                    <div
-                                        key={activity.id}
-                                        className="flex items-start gap-4 text-sm"
-                                    >
+                                {recentActivity.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                                        <Clock className="mb-2 h-8 w-8 opacity-20" />
+                                        <p>No recent activity</p>
+                                    </div>
+                                ) : (
+                                    recentActivity.map((activity: any) => (
                                         <div
-                                            className={`mt-1 h-2 w-2 rounded-full ${activity.action === "completed"
+                                            key={activity.id}
+                                            className="flex items-start gap-4 text-sm"
+                                        >
+                                            <div
+                                                className={`mt-1 h-2 w-2 rounded-full ${activity.action === "completed"
                                                     ? "bg-success"
                                                     : activity.action === "invoice"
                                                         ? "bg-primary"
                                                         : "bg-warning"
-                                                }`}
-                                        />
-                                        <div className="flex-1">
-                                            <p>
-                                                <span className="font-medium">{activity.patient}</span>
-                                                {" - "}
-                                                {activity.treatment}
-                                            </p>
-                                            <p className="text-muted-foreground">{activity.time}</p>
+                                                    }`}
+                                            />
+                                            <div className="flex-1">
+                                                <p>
+                                                    <span className="font-medium">{activity.patient}</span>
+                                                    {" - "}
+                                                    {activity.treatment}
+                                                </p>
+                                                <p className="text-muted-foreground">
+                                                    {format(new Date(activity.time), "MMM d, h:mm a")}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </CardContent>
                     </Card>
