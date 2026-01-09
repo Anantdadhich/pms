@@ -7,6 +7,7 @@ export async function POST(req: Request) {
     const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
 
     if (!WEBHOOK_SECRET) {
+        console.error('CLERK_WEBHOOK_SECRET is not set')
         throw new Error('Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env')
     }
 
@@ -57,6 +58,15 @@ export async function POST(req: Request) {
         }
 
         try {
+            // Create a clinic for the new user
+            const clinic = await prisma.clinic.create({
+                data: {
+                    name: `${first_name || 'My'}'s Clinic`,
+                    email: email,
+                },
+            })
+
+            // Create the user with the clinic
             await prisma.user.create({
                 data: {
                     clerkId: id,
@@ -64,9 +74,12 @@ export async function POST(req: Request) {
                     firstName: first_name || 'User',
                     lastName: last_name || '',
                     avatarUrl: image_url,
-                    role: 'STAFF', // Default role
+                    role: 'ADMIN', // First user is admin of their clinic
+                    clinicId: clinic.id,
                 },
             })
+
+            console.log('Created user with clinic:', { userId: id, clinicId: clinic.id })
         } catch (error) {
             console.error('Error creating user:', error)
             return new Response('Error creating user', { status: 500 })

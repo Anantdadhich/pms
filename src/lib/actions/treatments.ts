@@ -4,6 +4,14 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import type { TreatmentFormValues } from "@/lib/validations/treatment"
 
+// Serialization Helper
+const serializeDecimal = (val: any) => (val !== null && val !== undefined ? Number(val) : 0)
+
+const serializeTreatment = (treatment: any) => ({
+    ...treatment,
+    standardCost: serializeDecimal(treatment.standardCost),
+})
+
 export async function getTreatments(clinicId: string, category?: string) {
     const treatments = await prisma.treatmentCatalog.findMany({
         where: {
@@ -13,7 +21,7 @@ export async function getTreatments(clinicId: string, category?: string) {
         },
         orderBy: { category: "asc" },
     })
-    return treatments
+    return treatments.map(serializeTreatment)
 }
 
 export async function getAllTreatments(clinicId: string) {
@@ -21,7 +29,7 @@ export async function getAllTreatments(clinicId: string) {
         where: { clinicId },
         orderBy: [{ category: "asc" }, { name: "asc" }],
     })
-    return treatments
+    return treatments.map(serializeTreatment)
 }
 
 export async function createTreatment(clinicId: string, data: TreatmentFormValues) {
@@ -34,7 +42,7 @@ export async function createTreatment(clinicId: string, data: TreatmentFormValue
     })
 
     revalidatePath("/settings/treatments")
-    return treatment
+    return serializeTreatment(treatment)
 }
 
 export async function updateTreatment(id: string, data: Partial<TreatmentFormValues>) {
@@ -47,7 +55,7 @@ export async function updateTreatment(id: string, data: Partial<TreatmentFormVal
     })
 
     revalidatePath("/settings/treatments")
-    return treatment
+    return serializeTreatment(treatment)
 }
 
 export async function deleteTreatment(id: string) {

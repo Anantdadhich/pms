@@ -22,7 +22,7 @@ interface Patient {
 }
 
 interface AppointmentFormProps {
-    doctors: Doctor[]
+    // doctors: Doctor[] // Removed
     patients: Patient[]
     defaultValues?: Partial<AppointmentFormValues>
     onSubmit: (data: AppointmentFormValues) => Promise<void>
@@ -31,7 +31,7 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({
-    doctors,
+    // doctors,
     patients,
     defaultValues,
     onSubmit,
@@ -50,46 +50,45 @@ export function AppointmentForm({
         },
     })
 
+    const [searchTerm, setSearchTerm] = useState("")
+
+    const filteredPatients = patients.filter(p =>
+        p.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.lastName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="patientId">Patient *</Label>
+                    <Input
+                        placeholder="Search patient..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="mb-2"
+                    />
                     <select
                         id="patientId"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         {...register("patientId")}
                     >
-                        <option value="">Select Patient</option>
-                        {patients.map((patient) => (
+                        <option value="">Select Patient ({filteredPatients.length})</option>
+                        {filteredPatients.map((patient) => (
                             <option key={patient.id} value={patient.id}>
                                 {patient.firstName} {patient.lastName}
                             </option>
                         ))}
                     </select>
+                    {patients.length === 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">No patients found. Access Patients page to add one.</p>
+                    )}
                     {errors.patientId && (
                         <p className="text-sm text-destructive">{errors.patientId.message}</p>
                     )}
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="doctorId">Doctor *</Label>
-                    <select
-                        id="doctorId"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        {...register("doctorId")}
-                    >
-                        <option value="">Select Doctor</option>
-                        {doctors.map((doctor) => (
-                            <option key={doctor.id} value={doctor.id}>
-                                Dr. {doctor.firstName} {doctor.lastName}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.doctorId && (
-                        <p className="text-sm text-destructive">{errors.doctorId.message}</p>
-                    )}
-                </div>
+                {/* Doctor field removed - auto-assigned */}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

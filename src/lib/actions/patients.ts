@@ -4,6 +4,43 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import type { PatientFormValues } from "@/lib/validations/patient"
 
+// Serialization Helpers
+const serializeDecimal = (val: any) => (val !== null && val !== undefined ? Number(val) : null)
+
+const serializeInvoice = (invoice: any) => ({
+    ...invoice,
+    subtotal: serializeDecimal(invoice.subtotal) || 0,
+    discount: serializeDecimal(invoice.discount) || 0,
+    tax: serializeDecimal(invoice.tax) || 0,
+    total: serializeDecimal(invoice.total) || 0,
+    amountPaid: serializeDecimal(invoice.amountPaid) || 0,
+})
+
+const serializeProcedure = (proc: any) => ({
+    ...proc,
+    standardCost: serializeDecimal(proc.standardCost) || 0,
+})
+
+const serializeClinicalRecord = (rec: any) => ({
+    ...rec,
+    costOverride: serializeDecimal(rec.costOverride),
+    procedure: rec.procedure ? serializeProcedure(rec.procedure) : undefined,
+})
+
+const serializeAppointment = (apt: any) => ({
+    ...apt,
+    clinicalRecords: apt.clinicalRecords?.map(serializeClinicalRecord),
+})
+
+const serializePatient = (patient: any) => {
+    if (!patient) return null
+    return {
+        ...patient,
+        appointments: patient.appointments?.map(serializeAppointment),
+        invoices: patient.invoices?.map(serializeInvoice),
+    }
+}
+
 export async function getPatients(clinicId: string, query?: string) {
     const patients = await prisma.patient.findMany({
         where: {
@@ -31,6 +68,11 @@ export async function getPatientById(id: string) {
                 take: 10,
                 include: {
                     doctor: true,
+                    clinicalRecords: {
+                        include: {
+                            procedure: true,
+                        },
+                    },
                 },
             },
             invoices: {
@@ -39,7 +81,7 @@ export async function getPatientById(id: string) {
             },
         },
     })
-    return patient
+    return serializePatient(patient)
 }
 
 export async function createPatient(clinicId: string, data: PatientFormValues) {

@@ -5,6 +5,40 @@ import { revalidatePath } from "next/cache"
 import type { CreateInvoiceValues, PaymentFormValues } from "@/lib/validations/invoice"
 import { generateInvoiceNumber } from "@/lib/utils"
 
+// Helper to serialize Decimal to number
+function serializeInvoice(invoice: any) {
+    if (!invoice) return null
+
+    // Helper for creating safe objects
+    const safeNumber = (val: any) => (val !== null && val !== undefined ? Number(val) : 0)
+
+    const serialized = {
+        ...invoice,
+        subtotal: safeNumber(invoice.subtotal),
+        discount: safeNumber(invoice.discount),
+        tax: safeNumber(invoice.tax),
+        total: safeNumber(invoice.total),
+        amountPaid: safeNumber(invoice.amountPaid),
+    }
+
+    if (invoice.items) {
+        serialized.items = invoice.items.map((item: any) => ({
+            ...item,
+            unitPrice: safeNumber(item.unitPrice),
+            total: safeNumber(item.total),
+        }))
+    }
+
+    if (invoice.payments) {
+        serialized.payments = invoice.payments.map((payment: any) => ({
+            ...payment,
+            amount: safeNumber(payment.amount),
+        }))
+    }
+
+    return serialized
+}
+
 export async function getInvoices(
     clinicId: string,
     options?: {
@@ -30,7 +64,7 @@ export async function getInvoices(
         ...(limit && { take: limit }),
     })
 
-    return invoices
+    return invoices.map(serializeInvoice)
 }
 
 export async function getInvoiceById(id: string) {
@@ -52,7 +86,7 @@ export async function getInvoiceById(id: string) {
         },
     })
 
-    return invoice
+    return serializeInvoice(invoice)
 }
 
 export async function createInvoice(clinicId: string, data: CreateInvoiceValues) {
@@ -95,11 +129,12 @@ export async function createInvoice(clinicId: string, data: CreateInvoiceValues)
         },
         include: {
             items: true,
+            payments: true, // Include payments to match structure even if empty
         },
     })
 
     revalidatePath("/billing")
-    return invoice
+    return serializeInvoice(invoice)
 }
 
 export async function recordPayment(data: PaymentFormValues) {
@@ -137,7 +172,10 @@ export async function recordPayment(data: PaymentFormValues) {
     }
 
     revalidatePath("/billing")
-    return payment
+    return {
+        ...payment,
+        amount: Number(payment.amount),
+    }
 }
 
 export async function generateInvoiceFromAppointment(

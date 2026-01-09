@@ -1,4 +1,4 @@
-"use server"
+
 
 import prisma from "@/lib/prisma"
 import { startOfMonth, endOfMonth, subMonths } from "date-fns"
@@ -9,7 +9,6 @@ export async function getDashboardStats(clinicId: string) {
     const startOfLastMonth = startOfMonth(subMonths(new Date(), 1))
     const endOfLastMonth = endOfMonth(subMonths(new Date(), 1))
 
-    // 1. Total Patients
     const totalPatients = await prisma.patient.count({
         where: { clinicId },
     })
@@ -42,7 +41,15 @@ export async function getDashboardStats(clinicId: string) {
     })
 
 
-    // 3. Revenue (This Month) - Using 'paidAt' instead of 'paymentDate'
+
+    // 3. Total Revenue (All Time)
+    const totalRevenue = await prisma.payment.aggregate({
+        where: {
+            invoice: { clinicId },
+        },
+        _sum: { amount: true },
+    })
+
     const currentMonthRevenue = await prisma.payment.aggregate({
         where: {
             invoice: { clinicId },
@@ -66,6 +73,7 @@ export async function getDashboardStats(clinicId: string) {
     })
 
     // Decimal handling
+    const totalRevenueValue = totalRevenue._sum.amount ? Number(totalRevenue._sum.amount) : 0
     const revenueValue = currentMonthRevenue._sum.amount ? Number(currentMonthRevenue._sum.amount) : 0
     const lastRevenueValue = lastMonthRevenue._sum.amount ? Number(lastMonthRevenue._sum.amount) : 0
     const revenueChange = lastRevenueValue === 0 ? 100 : ((revenueValue - lastRevenueValue) / lastRevenueValue) * 100
@@ -95,11 +103,11 @@ export async function getDashboardStats(clinicId: string) {
             description: `${appointmentsCompletedToday} completed`,
         },
         {
-            title: "Revenue (This Month)",
-            value: revenueValue,
-            change: `${revenueChange.toFixed(1)}%`,
-            trend: revenueChange >= 0 ? "up" : "down",
-            description: "vs last month",
+            title: "Total Revenue", // Changed from "Revenue (This Month)"
+            value: totalRevenueValue,
+            change: `+${revenueValue.toLocaleString()} this month`, // Show monthly gain as 'change'
+            trend: "up",
+            description: "All time collected",
             isCurrency: true
         },
         {

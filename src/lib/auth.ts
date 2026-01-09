@@ -1,8 +1,5 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import prisma from '@/lib/prisma'
-
-// Define UserRole type locally to avoid import issues
-type UserRole = 'SUPERADMIN' | 'ADMIN' | 'DOCTOR' | 'STAFF'
 
 export async function getCurrentUser() {
     const { userId } = await auth()
@@ -11,10 +8,40 @@ export async function getCurrentUser() {
         return null
     }
 
-    const user = await prisma.user.findUnique({
+    // Try to find local user
+    let user = await prisma.user.findUnique({
         where: { clerkId: userId },
         include: { clinic: true },
     })
+
+    // If no local user, create one with a clinic
+    if (!user) {
+        const clerkUser = await currentUser()
+        if (!clerkUser) {
+            return null
+        }
+
+        // Create a clinic for this user
+        const clinic = await prisma.clinic.create({
+            data: {
+                name: `${clerkUser.firstName || 'My'}'s Clinic`,
+                email: clerkUser.emailAddresses[0]?.emailAddress || '',
+            },
+        })
+
+        // Create the user
+        user = await prisma.user.create({
+            data: {
+                clerkId: userId,
+                email: clerkUser.emailAddresses[0]?.emailAddress || '',
+                firstName: clerkUser.firstName || 'User',
+                lastName: clerkUser.lastName || '',
+                avatarUrl: clerkUser.imageUrl,
+                clinicId: clinic.id,
+            },
+            include: { clinic: true },
+        })
+    }
 
     return user
 }
@@ -29,16 +56,6 @@ export async function requireAuth() {
     return user
 }
 
-export async function requireRole(allowedRoles: UserRole[]) {
-    const user = await requireAuth()
-
-    if (!allowedRoles.includes(user.role as UserRole)) {
-        throw new Error('Forbidden: Insufficient permissions')
-    }
-
-    return user
-}
-
 export async function requireClinic() {
     const user = await requireAuth()
 
@@ -47,33 +64,4 @@ export async function requireClinic() {
     }
 
     return { user, clinicId: user.clinicId }
-}
-
-// Role check helpers
-export function canManageClinic(role: UserRole): boolean {
-    return ['SUPERADMIN', 'ADMIN'].includes(role)
-}
-
-export function canManageTreatments(role: UserRole): boolean {
-    return ['SUPERADMIN', 'ADMIN'].includes(role)
-}
-
-export function canViewPatients(role: UserRole): boolean {
-    return ['SUPERADMIN', 'ADMIN', 'DOCTOR', 'STAFF'].includes(role)
-}
-
-export function canEditClinicalRecords(role: UserRole): boolean {
-    return ['SUPERADMIN', 'ADMIN', 'DOCTOR'].includes(role)
-}
-
-export function canDeleteClinicalRecords(role: UserRole): boolean {
-    return ['SUPERADMIN', 'ADMIN', 'DOCTOR'].includes(role)
-}
-
-export function canManageBilling(role: UserRole): boolean {
-    return ['SUPERADMIN', 'ADMIN', 'STAFF'].includes(role)
-}
-
-export function canViewAnalytics(role: UserRole): boolean {
-    return ['SUPERADMIN', 'ADMIN'].includes(role)
 }

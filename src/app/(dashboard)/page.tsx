@@ -18,12 +18,28 @@ import {
 } from "@/lib/actions/dashboard"
 import { format } from "date-fns"
 import { formatCurrency } from "@/lib/utils"
+import { getCurrentUser } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-    // Fetch real data
-    const clinicId = "clinic_id_placeholder" // In real app, get from session/context
+    const user = await getCurrentUser()
+
+    if (!user) {
+        redirect("/sign-in")
+    }
+
+    if (!user.clinicId) {
+        // User exists but no clinic - this shouldn't happen normally
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <p>No clinic associated with your account. Please contact support.</p>
+            </div>
+        )
+    }
+
+    const clinicId = user.clinicId
     const [stats, upcomingAppointments, recentActivity] = await Promise.all([
         getDashboardStats(clinicId),
         getUpcomingAppointments(clinicId),
@@ -35,21 +51,7 @@ export default async function DashboardPage() {
             <Header
                 title="Dashboard"
                 description="Welcome back, Dr. Smith"
-                action={{
-                    label: "New Appointment",
-                    // In a server component, we can't pass a function log. 
-                    // This action might need to be removed or handled via a Client Component wrapper 
-                    // or just a link. For now, we'll keep it simple or remove the action if it requires client interactivity.
-                    // We'll replace it with a simple link or client component later if needed.
-                    onClick: () => { }
-                }}
             />
-            {/* Note: The Header 'action' prop with onClick won't work in Server Component if it logs to console. 
-                However, Header is a client component (marked 'use client' in its file), 
-                so passing a function from a Server Component is not allowed (functions are not serializable).
-                We should likely wrap the Header or remove the action for now. 
-                Let's remove the action prop to avoid serialization error until we make a ClientWrapper.
-            */}
 
             <div className="flex-1 space-y-6 p-6">
                 {/* Stats Grid */}

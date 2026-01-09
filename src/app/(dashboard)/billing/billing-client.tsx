@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,6 +31,8 @@ import { PAYMENT_METHODS } from "@/lib/validations/invoice"
 import { PDFDownloadLink } from "@react-pdf/renderer"
 import { InvoicePDF } from "@/components/billing/invoice-pdf"
 import { recordPayment } from "@/lib/actions/invoices"
+import { CreateInvoiceDialog } from "@/components/billing/create-invoice-dialog"
+import { useSearchParams, useRouter } from "next/navigation"
 
 interface BillingClientProps {
     initialInvoices: any[]
@@ -46,6 +48,36 @@ export function BillingClient({ initialInvoices, clinicId }: BillingClientProps)
     const [paymentAmount, setPaymentAmount] = useState("")
     const [paymentMethod, setPaymentMethod] = useState("CASH")
     const [isLoading, setIsLoading] = useState(false)
+    const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false)
+
+    const searchParams = useSearchParams()
+    const router = useRouter()
+    const patientIdParam = searchParams.get("patientId")
+    const highlightId = searchParams.get("highlight") // If we want to highlight newly created invoice
+
+    // Open create dialog if patientId is present (optional UX, user usually wants this)
+    // Actually, user might just want to filter. Let's filter if present, but also allow creating.
+    useEffect(() => {
+        if (patientIdParam) {
+            setFilter("all")
+            setSearchQuery("") // Or filter by patient name if we could
+            // If the user clicked "New Invoice" from patient page, we probably want to open the dialog
+            // But wait, the button on patient page just says "New Invoice" and links here.
+            setIsCreateInvoiceOpen(true)
+        }
+    }, [patientIdParam])
+
+    // Refresh data handler
+    const handleInvoiceCreated = () => {
+        // In a real app with server actions, revalidatePath handles data refresh.
+        // But we might need to reset filtered view or show success.
+        setIsCreateInvoiceOpen(false)
+        router.refresh()
+        // Optionally remove query param
+        if (patientIdParam) {
+            router.replace("/billing")
+        }
+    }
 
     // Calculate stats based on real data
     const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0)
@@ -130,7 +162,7 @@ export function BillingClient({ initialInvoices, clinicId }: BillingClientProps)
                 description="Manage invoices and payments"
                 action={{
                     label: "New Invoice",
-                    onClick: () => console.log("New invoice"),
+                    onClick: () => setIsCreateInvoiceOpen(true),
                 }}
             />
 
@@ -226,7 +258,7 @@ export function BillingClient({ initialInvoices, clinicId }: BillingClientProps)
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex justify-center gap-1">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push(`/billing/${invoice.id}`)}>
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
                                                     <PDFDownloadLink
@@ -352,6 +384,14 @@ export function BillingClient({ initialInvoices, clinicId }: BillingClientProps)
                     )}
                 </DialogContent>
             </Dialog>
-        </div>
+
+            <CreateInvoiceDialog
+                open={isCreateInvoiceOpen}
+                onOpenChange={setIsCreateInvoiceOpen}
+                clinicId={clinicId}
+                defaultPatientId={patientIdParam}
+                onSuccess={handleInvoiceCreated}
+            />
+        </div >
     )
 }
