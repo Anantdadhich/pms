@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { ScheduleClient } from "./schedule-client"
+import { getAppointments } from "@/lib/actions/appointments"
 
 export const dynamic = "force-dynamic"
 
@@ -19,5 +20,8 @@ export default async function SchedulePage() {
         )
     }
 
-    return <ScheduleClient clinicId={user.clinicId} />
+    // Fetch all appointments server-side
+    const appointments = await getAppointments(user.clinicId)
+
+    return <ScheduleClient clinicId={user.clinicId} initialAppointments={appointments} />
 }

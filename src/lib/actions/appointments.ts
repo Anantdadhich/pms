@@ -15,37 +15,13 @@ export async function getAppointments(
         status?: string
     }
 ) {
-    const { date, startDate, endDate, doctorId, status } = options || {}
+    const { doctorId, status } = options || {}
 
-    let rangeStart: Date | undefined
-    let rangeEnd: Date | undefined
-
-    if (date) {
-        // Single day filter
-        const queryDate = new Date(date)
-        rangeStart = new Date(queryDate)
-        rangeStart.setHours(0, 0, 0, 0)
-
-        rangeEnd = new Date(queryDate)
-        rangeEnd.setHours(23, 59, 59, 999)
-    } else if (startDate && endDate) {
-        // Range filter
-        rangeStart = new Date(startDate)
-        rangeStart.setHours(0, 0, 0, 0)
-
-        rangeEnd = new Date(endDate)
-        rangeEnd.setHours(23, 59, 59, 999)
-    }
-
+    // Simplified: Fetch ALL appointments for clinic and let client filter by date
+    // This avoids timezone bugs completely
     const appointments = await prisma.appointment.findMany({
         where: {
             clinicId,
-            ...(rangeStart && rangeEnd && {
-                scheduledAt: {
-                    gte: rangeStart,
-                    lte: rangeEnd,
-                },
-            }),
             ...(doctorId && { doctorId }),
             ...(status && { status: status as "SCHEDULED" | "CONFIRMED" | "SEATED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "NO_SHOW" }),
         },
@@ -105,13 +81,12 @@ export async function updateAppointmentStatus(
 }
 
 export async function getUpcomingAppointments(clinicId: string, limit = 5) {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const now = new Date()
 
     const appointments = await prisma.appointment.findMany({
         where: {
             clinicId,
-            scheduledAt: { gte: today },
+            scheduledAt: { gte: now },
             status: { in: ["SCHEDULED", "CONFIRMED", "SEATED"] },
         },
         include: {

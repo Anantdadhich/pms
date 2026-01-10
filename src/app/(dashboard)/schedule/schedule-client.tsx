@@ -34,13 +34,17 @@ interface Appointment {
     }
 }
 
-const timeSlots = [
-    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "12:00", "12:30", "14:00", "14:30", "15:00", "15:30",
-    "16:00", "16:30", "17:00", "17:30"
-]
+// Generate time slots for 24 hours (every 30 minutes)
+const timeSlots = Array.from({ length: 48 }, (_, i) => {
+    const hour = Math.floor(i / 2)
+    const minute = (i % 2) * 30
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+})
 
-export function ScheduleClient({ clinicId }: { clinicId: string }) {
+export function ScheduleClient({ clinicId, initialAppointments }: {
+    clinicId: string
+    initialAppointments: any[]
+}) {
     const [currentDate, setCurrentDate] = useState(new Date())
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [view, setView] = useState<"day" | "week">("day")
@@ -49,7 +53,30 @@ export function ScheduleClient({ clinicId }: { clinicId: string }) {
     // const { toast } = useToast() // Uncomment if toast component exists
     const [doctors, setDoctors] = useState<{ id: string; firstName: string; lastName: string }[]>([])
     const [patients, setPatients] = useState<{ id: string; firstName: string; lastName: string }[]>([])
-    const [appointments, setAppointments] = useState<Appointment[]>([])
+
+    // Initialize with server data and format dates
+    const [appointments, setAppointments] = useState<Appointment[]>(() => {
+        const formatted = initialAppointments.map((apt: any) => ({
+            ...apt,
+            scheduledAt: new Date(apt.scheduledAt)
+        }))
+
+        // DEBUG: Log all appointments received
+        console.log('=== SCHEDULE DEBUG ===')
+        console.log('Total appointments received:', formatted.length)
+        formatted.forEach((apt, idx) => {
+            console.log(`Appointment ${idx + 1}:`, {
+                patient: `${apt.patient.firstName} ${apt.patient.lastName}`,
+                scheduledAt: apt.scheduledAt,
+                scheduledAtISO: apt.scheduledAt.toISOString(),
+                time: format(apt.scheduledAt, 'HH:mm'),
+                date: format(apt.scheduledAt, 'yyyy-MM-dd'),
+                status: apt.status
+            })
+        })
+
+        return formatted
+    })
     const [isLoading, setIsLoading] = useState(false)
 
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
@@ -70,39 +97,28 @@ export function ScheduleClient({ clinicId }: { clinicId: string }) {
             }
         }
         loadData()
-    }, [])
-
-    // Fetch appointments when date or view changes
-    useEffect(() => {
-        const fetchAppointments = async () => {
-            // Avoid infinite loop by not depending on 'appointments'
-            // but we rely on currentDate and view
-
-            try {
-                let res;
-                if (view === "day") {
-                    res = await getAppointments(clinicId, { date: currentDate })
-                } else {
-                    const start = startOfWeek(currentDate, { weekStartsOn: 1 })
-                    const end = addDays(start, 6)
-                    res = await getAppointments(clinicId, { startDate: start, endDate: end })
-                }
-
-                const formatted = res.map((apt: any) => ({
-                    ...apt,
-                    scheduledAt: new Date(apt.scheduledAt)
-                })) as unknown as Appointment[]
-                setAppointments(formatted)
-            } catch (error) {
-                console.error("Failed to load appointments", error)
-            }
-        }
-        fetchAppointments()
-    }, [currentDate, view, clinicId])
+    }, [clinicId])
 
     const getAppointmentsForDate = (date: Date) => {
-        // We need to match day, month, year
-        return appointments.filter(apt => isSameDay(new Date(apt.scheduledAt), date))
+        // DEBUG: Log filtering
+        const matches = appointments.filter(apt => {
+            const aptDate = new Date(apt.scheduledAt)
+            const match = isSameDay(aptDate, date)
+
+            if (match) {
+                console.log('MATCH:', {
+                    searchDate: format(date, 'yyyy-MM-dd'),
+                    aptDate: format(aptDate, 'yyyy-MM-dd'),
+                    patient: `${apt.patient.firstName} ${apt.patient.lastName}`,
+                    time: format(aptDate, 'HH:mm')
+                })
+            }
+
+            return match
+        })
+
+        console.log(`Appointments for ${format(date, 'yyyy-MM-dd')}:`, matches.length)
+        return matches
     }
 
     const navigateDate = (direction: "prev" | "next") => {
@@ -115,13 +131,8 @@ export function ScheduleClient({ clinicId }: { clinicId: string }) {
         try {
             await createAppointment(clinicId, data)
             setIsNewAppointmentOpen(false)
-            // Refresh appointments
-            const res = await getAppointments(clinicId, { date: currentDate })
-            const formatted = res.map((apt: any) => ({
-                ...apt,
-                scheduledAt: new Date(apt.scheduledAt)
-            })) as unknown as Appointment[]
-            setAppointments(formatted)
+            // Refresh the entire page to get new server data
+            router.refresh()
         } catch (error) {
             console.error("Failed to create appointment", error)
         } finally {
@@ -162,6 +173,7 @@ export function ScheduleClient({ clinicId }: { clinicId: string }) {
             <Header
                 title="Schedule"
                 description={format(currentDate, "EEEE, MMMM d, yyyy")}
+                clinicId={clinicId}
                 action={{
                     label: "New Appointment",
                     onClick: () => setIsNewAppointmentOpen(true),
@@ -223,9 +235,23 @@ export function ScheduleClient({ clinicId }: { clinicId: string }) {
                             // Day View
                             <div className="divide-y">
                                 {timeSlots.map((time) => {
-                                    const slotAppointments = getAppointmentsForDate(currentDate).filter(a =>
-                                        format(a.scheduledAt, "HH:mm") === time
-                                    )
+                                    // Parse slot time
+                                    const [slotHour, slotMinute] = time.split(':').map(Number)
+
+                                    // Get appointments for this slot (show appointments within this 30-min window)
+                                    const slotAppointments = getAppointmentsForDate(currentDate).filter(a => {
+                                        const aptTime = format(a.scheduledAt, "HH:mm")
+                                        const [aptHour, aptMinute] = aptTime.split(':').map(Number)
+
+                                        // Calculate total minutes for comparison
+                                        const slotTotalMinutes = slotHour * 60 + slotMinute
+                                        const aptTotalMinutes = aptHour * 60 + aptMinute
+
+                                        // Show appointment if it falls within this 30-minute slot
+                                        // (from this slot time to next slot time)
+                                        return aptTotalMinutes >= slotTotalMinutes && aptTotalMinutes < slotTotalMinutes + 30
+                                    })
+
                                     return (
                                         <div key={time} className="flex min-h-[60px]">
                                             <div className="w-20 flex-shrink-0 p-2 text-sm text-muted-foreground border-r bg-muted/30">
@@ -301,40 +327,52 @@ export function ScheduleClient({ clinicId }: { clinicId: string }) {
 
                                 {/* Week Grid */}
                                 <div className="flex-1 overflow-auto">
-                                    {timeSlots.map((time) => (
-                                        <div key={time} className="flex border-b min-h-[50px]">
-                                            <div className="w-20 flex-shrink-0 p-1 text-xs text-muted-foreground border-r bg-muted/30">
-                                                {time}
+                                    {timeSlots.map((time) => {
+                                        // Parse slot time for range matching
+                                        const [slotHour, slotMinute] = time.split(':').map(Number)
+                                        const slotTotalMinutes = slotHour * 60 + slotMinute
+
+                                        return (
+                                            <div key={time} className="flex border-b min-h-[50px]">
+                                                <div className="w-20 flex-shrink-0 p-1 text-xs text-muted-foreground border-r bg-muted/30">
+                                                    {time}
+                                                </div>
+                                                {weekDays.map((day) => {
+                                                    // Get appointments within this 30-minute slot
+                                                    const slotAppointments = getAppointmentsForDate(day).filter(a => {
+                                                        const aptTime = format(a.scheduledAt, "HH:mm")
+                                                        const [aptHour, aptMinute] = aptTime.split(':').map(Number)
+                                                        const aptTotalMinutes = aptHour * 60 + aptMinute
+
+                                                        return aptTotalMinutes >= slotTotalMinutes && aptTotalMinutes < slotTotalMinutes + 30
+                                                    })
+
+                                                    return (
+                                                        <div
+                                                            key={day.toISOString()}
+                                                            className={cn(
+                                                                "flex-1 p-1 border-r last:border-r-0",
+                                                                isSameDay(day, new Date()) && "bg-primary/5"
+                                                            )}
+                                                        >
+                                                            {slotAppointments.map((apt) => (
+                                                                <div
+                                                                    key={apt.id}
+                                                                    className={cn(
+                                                                        "rounded px-2 py-1 text-xs cursor-pointer truncate mb-1",
+                                                                        getStatusColor(apt.status)
+                                                                    )}
+                                                                    title={`${apt.patient.firstName} - ${apt.type}`}
+                                                                >
+                                                                    {apt.patient.firstName}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )
+                                                })}
                                             </div>
-                                            {weekDays.map((day) => {
-                                                const slotAppointments = getAppointmentsForDate(day).filter(a =>
-                                                    format(a.scheduledAt, "HH:mm") === time
-                                                )
-                                                return (
-                                                    <div
-                                                        key={day.toISOString()}
-                                                        className={cn(
-                                                            "flex-1 p-1 border-r last:border-r-0",
-                                                            isSameDay(day, new Date()) && "bg-primary/5"
-                                                        )}
-                                                    >
-                                                        {slotAppointments.map((apt) => (
-                                                            <div
-                                                                key={apt.id}
-                                                                className={cn(
-                                                                    "rounded px-2 py-1 text-xs cursor-pointer truncate mb-1",
-                                                                    getStatusColor(apt.status)
-                                                                )}
-                                                                title={`${apt.patient.firstName} - ${apt.type}`}
-                                                            >
-                                                                {apt.patient.firstName}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}

@@ -14,12 +14,18 @@ import {
 import {
     getDashboardStats,
     getUpcomingAppointments,
-    getRecentActivity
+    getRecentActivity,
+    getRevenueChartData,
+    getAppointmentStatusDistribution,
+    getPatientGrowthData
 } from "@/lib/actions/dashboard"
 import { format } from "date-fns"
 import { formatCurrency } from "@/lib/utils"
 import { getCurrentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { RevenueChart } from "@/components/dashboard/revenue-chart"
+import { PatientGrowthChart } from "@/components/dashboard/patient-growth-chart"
+import { AppointmentStatusChart } from "@/components/dashboard/appointment-status-chart"
 
 export const dynamic = "force-dynamic"
 
@@ -40,10 +46,13 @@ export default async function DashboardPage() {
     }
 
     const clinicId = user.clinicId
-    const [stats, upcomingAppointments, recentActivity] = await Promise.all([
+    const [stats, upcomingAppointments, recentActivity, revenueData, appointmentStatusData, patientGrowthData] = await Promise.all([
         getDashboardStats(clinicId),
         getUpcomingAppointments(clinicId),
-        getRecentActivity(clinicId)
+        getRecentActivity(clinicId),
+        getRevenueChartData(clinicId),
+        getAppointmentStatusDistribution(clinicId),
+        getPatientGrowthData(clinicId)
     ])
 
     return (
@@ -51,6 +60,7 @@ export default async function DashboardPage() {
             <Header
                 title="Dashboard"
                 description={`Welcome back, ${user.firstName} ${user.lastName}`}
+                clinicId={clinicId}
             />
 
             <div className="flex-1 space-y-6 p-6">
@@ -202,23 +212,13 @@ export default async function DashboardPage() {
                     </Card>
                 </div>
 
-                {/* Revenue Chart Placeholder */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Revenue Overview</CardTitle>
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-success" />
-                            <span className="text-sm text-success">+23% this month</span>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex h-[200px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
-                            <p className="text-muted-foreground">
-                                Revenue chart will be displayed here
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Charts Grid */}
+                <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-7">
+                    <RevenueChart data={revenueData} />
+                    <AppointmentStatusChart data={appointmentStatusData} />
+                </div>
+
+                <PatientGrowthChart data={patientGrowthData} />
             </div>
         </div>
     )

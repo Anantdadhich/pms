@@ -43,17 +43,54 @@ const serializePatient = (patient: any) => {
 }
 
 export async function getPatients(clinicId: string, query?: string) {
+    // Build search conditions
+    const whereConditions: any = { clinicId }
+
+    if (query) {
+        // Split query into words for better name matching
+        const queryWords = query.trim().split(/\s+/)
+
+        if (queryWords.length === 1) {
+            // Single word: search firstName, lastName, or phone
+            whereConditions.OR = [
+                { firstName: { contains: query, mode: "insensitive" } },
+                { lastName: { contains: query, mode: "insensitive" } },
+                { phone: { contains: query } },
+            ]
+        } else if (queryWords.length === 2) {
+            // Two words: likely "FirstName LastName"
+            whereConditions.OR = [
+                // Match "First Last"
+                {
+                    AND: [
+                        { firstName: { contains: queryWords[0], mode: "insensitive" } },
+                        { lastName: { contains: queryWords[1], mode: "insensitive" } },
+                    ]
+                },
+                // Match "Last First" (reversed)
+                {
+                    AND: [
+                        { firstName: { contains: queryWords[1], mode: "insensitive" } },
+                        { lastName: { contains: queryWords[0], mode: "insensitive" } },
+                    ]
+                },
+                // Also search each word individually
+                { firstName: { contains: query, mode: "insensitive" } },
+                { lastName: { contains: query, mode: "insensitive" } },
+                { phone: { contains: query } },
+            ]
+        } else {
+            // More than 2 words: search the full query in each field
+            whereConditions.OR = [
+                { firstName: { contains: query, mode: "insensitive" } },
+                { lastName: { contains: query, mode: "insensitive" } },
+                { phone: { contains: query } },
+            ]
+        }
+    }
+
     const patients = await prisma.patient.findMany({
-        where: {
-            clinicId,
-            ...(query && {
-                OR: [
-                    { firstName: { contains: query, mode: "insensitive" } },
-                    { lastName: { contains: query, mode: "insensitive" } },
-                    { phone: { contains: query } },
-                ],
-            }),
-        },
+        where: whereConditions,
         orderBy: { createdAt: "desc" },
         take: 50,
     })
