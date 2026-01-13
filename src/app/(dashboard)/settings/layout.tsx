@@ -17,11 +17,6 @@ const settingsNav = [
         href: "/settings/treatments",
         icon: Stethoscope,
     },
-    {
-        title: "Staff & Roles",
-        href: "/settings/staff",
-        icon: Users,
-    },
 ]
 
 export default function SettingsLayout({

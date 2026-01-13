@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dental PMS (Patient Management System)
 
-## Getting Started
+A modern, comprehensive, and state-of-the-art clinic management solution designed specifically for dental professionals. This application streamlines patient workflows, scheduling, billing, and clinical record-keeping with a premium, responsive UI.
 
-First, run the development server:
+## Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Dynamic Dashboard
+- **Real-time Analytics**: Stay updated with patient growth, revenue trends, and appointment statistics.
+- **Upcoming Schedule**: Quick view of daily and weekly appointments.
+- **Recent Activity**: Track the latest updates across the clinic.
+
+###  Patient Management
+- **Centralized Records**: Manage patient profiles, medical history, and contact details.
+- **Bulk Import/Export**: seamless migration with CSV support and duplicate detection (by phone number).
+- **Service History**: Track treatments and procedures for every patient.
+
+### Advanced Scheduler
+- **Interactive Calendar**: Premium day/week views with intuitive navigation.
+- **Smart Working Hours**: Auto-filtered time slots (8 AM - 8 PM) with 24-hour expansion.
+- **Auto-Scroll**: Automatically centers on the current time for busy practitioners.
+
+### Billing & Invoicing
+- **Automated Invoices**: Generate invoices directly from clinical procedures.
+- **Payment Tracking**: Record payments via Cash, Card, UPI, and Bank Transfer.
+- **PDF Generation**: Professional invoices ready for print or digital sharing.
+
+### Clinic Settings
+- **Treatment Catalog**: Customize your services, categories, and standard pricing.
+- **Role-Based Access**: Secure management of doctors and administrative staff.
+
+## Tech Stack
+
+- **Framework**: [Next.js 14/15](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [Prisma ORM](https://www.prisma.io/)
+- **Authentication**: [Auth/Clerk](https://clerk.com/)
+- **Date Management**: [date-fns](https://date-fns.org/)
+- **Charts**: [Recharts](https://recharts.org/)
+- **Forms**: [React Hook Form](https://react-hook-form.com/) & [Zod](https://zod.dev/)
+
+##  Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- PostgreSQL database
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Anantdadhich/pms.git
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+   Create a `.env` file in the root directory:
+   ```env
+   DATABASE_URL="your-postgresql-connection-string"
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your-key"
+   CLERK_SECRET_KEY="your-key"
+   ```
+
+4. **Database Migration**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+5. **Run Development Server**
+   ```bash
+   npm run dev
+   ```
+
+Open [http://localhost:3000](http://localhost:3000) to see your local instance.
+
+## Project Structure
+
+```text
+src/
+├── app/             # Next.js App Router (Pages & API)
+├── components/      # Reusable UI components
+│   ├── ui/         # Base Shadcn/UI components
+│   ├── dashboard/  # Dashboard specific charts & cards
+│   ├── patients/   # Patient forms & tables
+│   └── schedule/   # Calendar & appointment logic
+├── lib/             # Utilities and Server Actions
+│   ├── actions/    # Backend logic (Prisma queries)
+│   ├── validations/# Zod schemas
+│   └── utils.ts    # Formatting & helpers
+└── prisma/          # Database schema
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## License
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Individual/Commercial license as per project terms.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+Built with ❤️ for Dental Excellence.

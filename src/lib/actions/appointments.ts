@@ -17,8 +17,6 @@ export async function getAppointments(
 ) {
     const { doctorId, status } = options || {}
 
-    // Simplified: Fetch ALL appointments for clinic and let client filter by date
-    // This avoids timezone bugs completely
     const appointments = await prisma.appointment.findMany({
         where: {
             clinicId,
@@ -54,8 +52,8 @@ export async function createAppointment(
             doctor: true,
         },
     })
-
     revalidatePath("/schedule")
+    revalidatePath("/") // Dashboard
     return appointment
 }
 
@@ -75,8 +73,8 @@ export async function updateAppointmentStatus(
             data: { lastVisitDate: new Date() },
         })
     }
-
     revalidatePath("/schedule")
+    revalidatePath("/") // Dashboard
     return appointment
 }
 

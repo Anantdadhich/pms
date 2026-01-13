@@ -101,9 +101,14 @@ export function ImportPatientsDialog({ clinicId, onSuccess }: ImportPatientsDial
             const result = await importPatients(clinicId, parsedData)
 
             if (result.success) {
+                let description = `Successfully imported ${result.count} patients.`
+                if (result.skipped && result.skipped > 0) {
+                    description += ` Skipped ${result.skipped} duplicates (already exist by phone number).`
+                }
+
                 toast({
-                    title: "Import Successful",
-                    description: `Successfully imported ${result.count} patients.`,
+                    title: result.count > 0 ? "Import Successful" : "Import Complete",
+                    description,
                 })
                 setOpen(false)
                 setFile(null)

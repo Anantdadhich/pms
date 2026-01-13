@@ -132,6 +132,7 @@ export async function createPatient(clinicId: string, data: PatientFormValues) {
     })
 
     revalidatePath("/patients")
+    revalidatePath("/") // Dashboard
     return patient
 }
 
@@ -146,6 +147,7 @@ export async function updatePatient(id: string, data: Partial<PatientFormValues>
 
     revalidatePath("/patients")
     revalidatePath(`/patients/${id}`)
+    revalidatePath("/") // Dashboard
     return patient
 }
 
@@ -155,6 +157,7 @@ export async function deletePatient(id: string) {
     })
 
     revalidatePath("/patients")
+    revalidatePath("/") // Dashboard
 }
 
 export async function updateLastVisitDate(patientId: string) {
@@ -166,7 +169,7 @@ export async function updateLastVisitDate(patientId: string) {
 
 /**
  * Import patients from CSV data
- * Handles bulk creation and basic validation
+ * Handles bulk creation with duplicate detection based on phone number
  */
 export async function importPatients(clinicId: string, patients: any[]) {
     const user = await getCurrentUser()
@@ -187,11 +190,14 @@ export async function importPatients(clinicId: string, patients: any[]) {
                 if (isNaN(dob.getTime())) dob = new Date()
             }
 
+            // Normalize phone number (remove spaces, dashes, etc.)
+            const normalizedPhone = String(p.phone).replace(/[\s\-\(\)]/g, '')
+
             return {
-                firstName: String(p.firstName),
-                lastName: String(p.lastName),
-                phone: String(p.phone),
-                email: p.email ? String(p.email) : null,
+                firstName: String(p.firstName).trim(),
+                lastName: String(p.lastName).trim(),
+                phone: normalizedPhone,
+                email: p.email ? String(p.email).trim() : null,
                 dateOfBirth: dob,
                 gender: p.gender ? String(p.gender) : null,
                 address: p.address ? String(p.address) : null,
@@ -200,21 +206,52 @@ export async function importPatients(clinicId: string, patients: any[]) {
         }).filter(Boolean) as any[]
 
         if (validPatients.length === 0) {
-            return { success: false, count: 0, error: "No valid records found" }
+            return { success: false, count: 0, skipped: 0, error: "No valid records found" }
+        }
+
+        // Get all phone numbers from the import
+        const importPhones = validPatients.map(p => p.phone)
+
+        // Check for existing patients with same phone numbers in this clinic
+        const existingPatients = await prisma.patient.findMany({
+            where: {
+                clinicId,
+                phone: { in: importPhones }
+            },
+            select: { phone: true }
+        })
+
+        const existingPhones = new Set(existingPatients.map(p => p.phone))
+
+        // Filter out duplicates
+        const newPatients = validPatients.filter(p => !existingPhones.has(p.phone))
+        const skippedCount = validPatients.length - newPatients.length
+
+        if (newPatients.length === 0) {
+            return {
+                success: true,
+                count: 0,
+                skipped: skippedCount,
+                error: `All ${skippedCount} patients already exist in the system (matched by phone number).`
+            }
         }
 
         const result = await prisma.patient.createMany({
-            data: validPatients,
+            data: newPatients,
             skipDuplicates: true
         })
 
         revalidatePath("/patients")
         revalidatePath("/")
 
-        return { success: true, count: result.count }
+        return {
+            success: true,
+            count: result.count,
+            skipped: skippedCount
+        }
     } catch (error) {
         console.error("Import failed:", error)
-        return { success: false, count: 0, error: "Database error during import" }
+        return { success: false, count: 0, skipped: 0, error: "Database error during import" }
     }
 }
 

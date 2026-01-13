@@ -134,6 +134,7 @@ export async function createInvoice(clinicId: string, data: CreateInvoiceValues)
     })
 
     revalidatePath("/billing")
+    revalidatePath("/") // Dashboard
     return serializeInvoice(invoice)
 }
 
@@ -172,6 +173,7 @@ export async function recordPayment(data: PaymentFormValues) {
     }
 
     revalidatePath("/billing")
+    revalidatePath("/") // Dashboard
     return {
         ...payment,
         amount: Number(payment.amount),

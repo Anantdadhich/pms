@@ -53,16 +53,18 @@ export function BillingClient({ initialInvoices, clinicId }: BillingClientProps)
     const searchParams = useSearchParams()
     const router = useRouter()
     const patientIdParam = searchParams.get("patientId")
-    const highlightId = searchParams.get("highlight") // If we want to highlight newly created invoice
+    const highlightId = searchParams.get("highlight")
 
-    // Open create dialog if patientId is present (optional UX, user usually wants this)
-    // Actually, user might just want to filter. Let's filter if present, but also allow creating.
+    // Sync local state with server data when props change
+    useEffect(() => {
+        setInvoices(initialInvoices)
+    }, [initialInvoices])
+
+    // Open create dialog if patientId is present
     useEffect(() => {
         if (patientIdParam) {
             setFilter("all")
-            setSearchQuery("") // Or filter by patient name if we could
-            // If the user clicked "New Invoice" from patient page, we probably want to open the dialog
-            // But wait, the button on patient page just says "New Invoice" and links here.
+            setSearchQuery("")
             setIsCreateInvoiceOpen(true)
         }
     }, [patientIdParam])

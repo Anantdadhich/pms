@@ -16,6 +16,7 @@ interface QuickAddPatientSheetProps {
     onOpenChange: (open: boolean) => void
     onSubmit: (data: PatientFormValues) => Promise<void>
     defaultValues?: Partial<PatientFormValues>
+    clinicId: string
 }
 
 export function QuickAddPatientSheet({
@@ -23,6 +24,7 @@ export function QuickAddPatientSheet({
     onOpenChange,
     onSubmit,
     defaultValues,
+    clinicId,
 }: QuickAddPatientSheetProps) {
     const [isLoading, setIsLoading] = useState(false)
 
@@ -49,6 +51,7 @@ export function QuickAddPatientSheet({
                 </SheetHeader>
                 <div className="mt-6">
                     <PatientForm
+                        clinicId={clinicId}
                         defaultValues={defaultValues}
                         onSubmit={handleSubmit}
                         onCancel={() => onOpenChange(false)}

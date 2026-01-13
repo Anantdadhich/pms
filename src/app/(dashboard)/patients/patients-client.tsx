@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { PatientTable } from "@/components/patients/patient-table"
@@ -13,7 +13,7 @@ import { ExportPatientsDialog } from "@/components/patients/export-patients-dial
 import { useToast } from "@/hooks/use-toast"
 
 interface PatientsClientProps {
-    initialPatients: any[] // Using any for brevity in migration, ideally Typed
+    initialPatients: any[]
     clinicId: string
 }
 
@@ -23,6 +23,11 @@ export function PatientsClient({ initialPatients, clinicId }: PatientsClientProp
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
     const [patients, setPatients] = useState(initialPatients)
     const [selectedPatient, setSelectedPatient] = useState<any>(null)
+
+    // Sync local state with server data when props change
+    useEffect(() => {
+        setPatients(initialPatients)
+    }, [initialPatients])
 
     const handleSheetSubmit = async (data: PatientFormValues) => {
         try {
@@ -114,6 +119,7 @@ export function PatientsClient({ initialPatients, clinicId }: PatientsClientProp
                 }}
                 onSubmit={handleSheetSubmit}
                 defaultValues={selectedPatient}
+                clinicId={clinicId}
             />
         </div>
     )

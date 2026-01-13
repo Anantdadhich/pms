@@ -121,13 +121,13 @@ export async function getDashboardStats(clinicId: string) {
 }
 
 export async function getUpcomingAppointments(clinicId: string) {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    // Use current time (not midnight) to get actually upcoming appointments
+    const now = new Date()
 
-    return await prisma.appointment.findMany({
+    const appointments = await prisma.appointment.findMany({
         where: {
             clinicId,
-            scheduledAt: { gte: today },
+            scheduledAt: { gte: now },
             status: { in: ["SCHEDULED", "CONFIRMED", "SEATED"] },
         },
         include: {
@@ -136,6 +136,8 @@ export async function getUpcomingAppointments(clinicId: string) {
         orderBy: { scheduledAt: "asc" },
         take: 5,
     })
+
+    return appointments
 }
 
 export async function getRecentActivity(clinicId: string) {
