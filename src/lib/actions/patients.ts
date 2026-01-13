@@ -126,6 +126,7 @@ export async function createPatient(clinicId: string, data: PatientFormValues) {
     const patient = await prisma.patient.create({
         data: {
             ...data,
+            dateOfBirth: new Date(data.dateOfBirth),
             clinicId,
             email: data.email || null,
         },
@@ -141,6 +142,7 @@ export async function updatePatient(id: string, data: Partial<PatientFormValues>
         where: { id },
         data: {
             ...data,
+            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
             email: data.email || null,
         },
     })

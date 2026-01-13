@@ -1,20 +1,44 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatCurrency } from "@/lib/utils"
+import { TrendingUp } from "lucide-react"
 
 interface RevenueChartProps {
-    data: { name: string; value: number }[]
+    weeklyData: { name: string; value: number }[]
+    monthlyData: { name: string; value: number }[]
 }
 
-export function RevenueChart({ data }: RevenueChartProps) {
-    const maxValue = Math.max(...data.map(d => d.value), 100) // Avoid divide by zero
+export function RevenueChart({ weeklyData, monthlyData }: RevenueChartProps) {
+    const [period, setPeriod] = useState<"weekly" | "monthly">("monthly")
+    const data = period === "weekly" ? weeklyData : monthlyData
+    const maxValue = Math.max(...data.map(d => d.value), 100)
 
     return (
         <Card className="col-span-full lg:col-span-4">
             <CardHeader>
-                <CardTitle>Revenue Overview</CardTitle>
-                <CardDescription>Monthly revenue for the last 6 months</CardDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>Revenue Overview</CardTitle>
+                        <CardDescription>
+                            {period === "weekly" ? "Last 8 weeks" : "Last 6 months"}
+                        </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <Select value={period} onValueChange={(val) => setPeriod(val as "weekly" | "monthly")}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="weekly">Weekly</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="h-[200px] w-full flex items-end justify-between gap-2 pt-4">

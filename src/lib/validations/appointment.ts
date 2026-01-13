@@ -1,32 +1,39 @@
-import { z } from 'zod'
+import { z } from "zod"
 
 export const appointmentFormSchema = z.object({
-    patientId: z.string().min(1, 'Patient is required'),
-    doctorId: z.string().optional(),
-    scheduledAt: z.coerce.date({ message: 'Appointment date is required' }),
-    duration: z.number().min(15).max(240).default(30),
-    type: z.enum(['CHECKUP', 'TREATMENT', 'EMERGENCY', 'FOLLOW_UP', 'CONSULTATION']),
-    chiefComplaint: z.string().max(500).optional(),
-    notes: z.string().max(1000).optional(),
+    patientId: z.string()
+        .min(1, "Please select a patient"),
+
+    scheduledAt: z.union([z.string(), z.date()])
+        .refine((val) => {
+            const date = typeof val === "string" ? new Date(val) : val
+            return date instanceof Date && !isNaN(date.getTime())
+        }, "Please enter a valid date and time")
+        .refine((val) => {
+            const date = typeof val === "string" ? new Date(val) : val
+            // Can't schedule appointments more than 1 year in advance
+            const oneYearFromNow = new Date()
+            oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
+            return date <= oneYearFromNow
+        }, "Cannot schedule more than 1 year in advance"),
+
+    duration: z.number()
+        .min(15, "Duration must be at least 15 minutes")
+        .max(480, "Duration cannot exceed 8 hours")
+        .default(30),
+
+    type: z.enum(["CHECKUP", "TREATMENT", "EMERGENCY", "FOLLOW_UP", "CONSULTATION"])
+        .default("CHECKUP"),
+
+    chiefComplaint: z.string()
+        .max(500, "Chief complaint is too long")
+        .optional()
+        .transform((val) => val?.trim()),
+
+    notes: z.string()
+        .max(1000, "Notes are too long")
+        .optional()
+        .transform((val) => val?.trim()),
 })
 
 export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>
-
-export const appointmentStatusSchema = z.enum([
-    'SCHEDULED',
-    'CONFIRMED',
-    'SEATED',
-    'IN_PROGRESS',
-    'COMPLETED',
-    'CANCELLED',
-    'NO_SHOW',
-])
-
-export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>
-
-export const updateAppointmentStatusSchema = z.object({
-    id: z.string().uuid(),
-    status: appointmentStatusSchema,
-})
-
-export type UpdateAppointmentStatusParams = z.infer<typeof updateAppointmentStatusSchema>

@@ -87,7 +87,30 @@ export function CreateInvoiceDialog({
                         getTreatments(clinicId)
                     ])
                     setPatients(patientsData)
-                    setTreatments(treatmentsData)
+
+                    // If no treatments in catalog, provide default dental services
+                    if (treatmentsData.length === 0) {
+                        const defaultServices = [
+                            { id: 'default-1', name: 'Dental Cleaning (Prophylaxis)', standardCost: 1500, category: 'Preventive' },
+                            { id: 'default-2', name: 'Tooth Filling (Composite)', standardCost: 2000, category: 'Restorative' },
+                            { id: 'default-3', name: 'Tooth Extraction', standardCost: 1500, category: 'Surgery' },
+                            { id: 'default-4', name: 'Root Canal Treatment (RCT)', standardCost: 5000, category: 'Endodontic' },
+                            { id: 'default-5', name: 'Dental Crown (Ceramic)', standardCost: 8000, category: 'Restorative' },
+                            { id: 'default-6', name: 'Teeth Whitening', standardCost: 10000, category: 'Cosmetic' },
+                            { id: 'default-7', name: 'Scaling & Polishing', standardCost: 1200, category: 'Preventive' },
+                            { id: 'default-8', name: 'Tooth Implant', standardCost: 35000, category: 'Surgery' },
+                            { id: 'default-9', name: 'Dental Bridge', standardCost: 15000, category: 'Restorative' },
+                            { id: 'default-10', name: 'Orthodontic Braces (Full)', standardCost: 50000, category: 'Orthodontic' },
+                            { id: 'default-11', name: 'Wisdom Tooth Extraction', standardCost: 3000, category: 'Surgery' },
+                            { id: 'default-12', name: 'Dental Veneer (per tooth)', standardCost: 12000, category: 'Cosmetic' },
+                            { id: 'default-13', name: 'Consultation Fee', standardCost: 500, category: 'General' },
+                            { id: 'default-14', name: 'X-Ray (Full Mouth)', standardCost: 800, category: 'Diagnostic' },
+                            { id: 'default-15', name: 'Gum Treatment (Deep Cleaning)', standardCost: 4000, category: 'Periodontic' },
+                        ]
+                        setTreatments(defaultServices as any)
+                    } else {
+                        setTreatments(treatmentsData)
+                    }
                 } catch (error) {
                     console.error("Failed to load data", error)
                 } finally {

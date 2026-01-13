@@ -194,7 +194,7 @@ export function InvoiceDetailClient({ invoice, clinicId }: InvoiceDetailClientPr
                                 <tbody className="divide-y">
                                     {invoice.payments.map((payment: any) => (
                                         <tr key={payment.id}>
-                                            <td className="py-3 text-sm">{safeFormat(payment.createdAt, "dd MMM yyyy")}</td>
+                                            <td className="py-3 text-sm">{safeFormat(payment.paidAt, "dd MMM yyyy HH:mm")}</td>
                                             <td className="py-3 text-sm capitalize">{payment.method.toLowerCase().replace("_", " ")}</td>
                                             <td className="py-3 text-sm text-muted-foreground">{payment.reference || "-"}</td>
                                             <td className="py-3 text-sm text-right font-medium">{formatCurrency(payment.amount)}</td>

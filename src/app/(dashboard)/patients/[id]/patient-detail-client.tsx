@@ -146,7 +146,6 @@ export function PatientDetailClient({ patient }: { patient: any }) {
                         <Tabs defaultValue="overview">
                             <TabsList className="mb-4">
                                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                                <TabsTrigger value="charting">Charting</TabsTrigger>
                                 <TabsTrigger value="billing">Billing</TabsTrigger>
                             </TabsList>
 
@@ -204,81 +203,6 @@ export function PatientDetailClient({ patient }: { patient: any }) {
                                         </Card>
                                     ))
                                 )}
-                            </TabsContent>
-
-                            {/* Charting Tab */}
-                            <TabsContent value="charting" className="space-y-4">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Dental Chart (Odontogram)</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            Click on a tooth to view details. Green indicates previous treatment.
-                                        </p>
-
-                                        <div className="space-y-6">
-                                            {/* Upper Teeth */}
-                                            <div>
-                                                <p className="text-xs text-muted-foreground mb-2 text-center">Upper</p>
-                                                <div className="flex justify-center gap-1">
-                                                    {TOOTH_NUMBERS.upper.map((tooth) => (
-                                                        <button
-                                                            key={tooth}
-                                                            onClick={() => setSelectedTooth(tooth)}
-                                                            className={`w-8 h-10 rounded text-xs font-medium border-2 transition-colors ${treatedTeeth.includes(tooth)
-                                                                ? "bg-green-100 border-green-400 text-green-700"
-                                                                : selectedTooth === tooth
-                                                                    ? "bg-primary text-primary-foreground border-primary"
-                                                                    : "bg-muted/50 border-border hover:bg-muted"
-                                                                }`}
-                                                        >
-                                                            {tooth}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Lower Teeth */}
-                                            <div>
-                                                <div className="flex justify-center gap-1">
-                                                    {TOOTH_NUMBERS.lower.map((tooth) => (
-                                                        <button
-                                                            key={tooth}
-                                                            onClick={() => setSelectedTooth(tooth)}
-                                                            className={`w-8 h-10 rounded text-xs font-medium border-2 transition-colors ${treatedTeeth.includes(tooth)
-                                                                ? "bg-green-100 border-green-400 text-green-700"
-                                                                : selectedTooth === tooth
-                                                                    ? "bg-primary text-primary-foreground border-primary"
-                                                                    : "bg-muted/50 border-border hover:bg-muted"
-                                                                }`}
-                                                        >
-                                                            {tooth}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground mt-2 text-center">Lower</p>
-                                            </div>
-                                        </div>
-
-                                        {selectedTooth && (
-                                            <div className="mt-6 p-4 rounded-lg bg-muted/50">
-                                                <h4 className="font-medium mb-2">Tooth {selectedTooth}</h4>
-                                                {treatedTeeth.includes(selectedTooth) ? (
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Treatment recorded in history.
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-sm text-muted-foreground">No treatments recorded</p>
-                                                )}
-                                                <Button size="sm" className="mt-2" onClick={() => router.push('/schedule')}>
-                                                    <Plus className="h-4 w-4 mr-1" />
-                                                    Add Treatment (Schedule)
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
                             </TabsContent>
 
                             {/* Billing Tab */}

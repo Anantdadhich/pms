@@ -15,11 +15,19 @@ export async function getAppointments(
         status?: string
     }
 ) {
-    const { doctorId, status } = options || {}
+    const { doctorId, status, startDate, endDate } = options || {}
+
+    // Performance optimization: Default to ±30 days if no date range specified
+    const defaultStart = startDate || new Date(new Date().setDate(new Date().getDate() - 30))
+    const defaultEnd = endDate || new Date(new Date().setDate(new Date().getDate() + 30))
 
     const appointments = await prisma.appointment.findMany({
         where: {
             clinicId,
+            scheduledAt: {
+                gte: defaultStart,
+                lte: defaultEnd,
+            },
             ...(doctorId && { doctorId }),
             ...(status && { status: status as "SCHEDULED" | "CONFIRMED" | "SEATED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "NO_SHOW" }),
         },

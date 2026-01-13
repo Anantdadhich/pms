@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Edit, Trash2, Loader2 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-import { TREATMENT_CATEGORIES } from "@/lib/validations/treatment"
+
 import { createTreatment, updateTreatment, deleteTreatment } from "@/lib/actions/treatments"
 import { useRouter } from "next/navigation"
 
@@ -251,11 +251,16 @@ export function TreatmentsClient({ initialTreatments, clinicId }: TreatmentsClie
                                     required
                                 >
                                     <option value="">Select category</option>
-                                    {TREATMENT_CATEGORIES.map((cat) => (
-                                        <option key={cat} value={cat}>
-                                            {cat}
-                                        </option>
-                                    ))}
+                                    <option value="Preventive">Preventive</option>
+                                    <option value="Restorative">Restorative</option>
+                                    <option value="Cosmetic">Cosmetic</option>
+                                    <option value="Endodontic">Endodontic</option>
+                                    <option value="Periodontic">Periodontic</option>
+                                    <option value="Orthodontic">Orthodontic</option>
+                                    <option value="Surgery">Surgery</option>
+                                    <option value="Diagnostic">Diagnostic</option>
+                                    <option value="General">General</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>

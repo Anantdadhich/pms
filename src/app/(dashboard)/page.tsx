@@ -16,8 +16,12 @@ import {
     getUpcomingAppointments,
     getRecentActivity,
     getRevenueChartData,
+    getRevenueChartDataWeekly,
     getAppointmentStatusDistribution,
-    getPatientGrowthData
+    getPatientGrowthData,
+    getPatientGrowthDataWeekly,
+    getTopServicesData,
+    getMonthlyComparisonData
 } from "@/lib/actions/dashboard"
 import { format } from "date-fns"
 import { formatCurrency } from "@/lib/utils"
@@ -26,6 +30,8 @@ import { redirect } from "next/navigation"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { PatientGrowthChart } from "@/components/dashboard/patient-growth-chart"
 import { AppointmentStatusChart } from "@/components/dashboard/appointment-status-chart"
+import { TopServicesChart } from "@/components/dashboard/top-services-chart"
+import { MonthlyComparisonChart } from "@/components/dashboard/monthly-comparison-chart"
 
 export const dynamic = "force-dynamic"
 
@@ -46,13 +52,28 @@ export default async function DashboardPage() {
     }
 
     const clinicId = user.clinicId
-    const [stats, upcomingAppointments, recentActivity, revenueData, appointmentStatusData, patientGrowthData] = await Promise.all([
+    const [
+        stats,
+        upcomingAppointments,
+        recentActivity,
+        revenueDataMonthly,
+        revenueDataWeekly,
+        appointmentStatusData,
+        patientGrowthDataMonthly,
+        patientGrowthDataWeekly,
+        topServicesData,
+        monthlyComparisonData
+    ] = await Promise.all([
         getDashboardStats(clinicId),
         getUpcomingAppointments(clinicId),
         getRecentActivity(clinicId),
         getRevenueChartData(clinicId),
+        getRevenueChartDataWeekly(clinicId),
         getAppointmentStatusDistribution(clinicId),
-        getPatientGrowthData(clinicId)
+        getPatientGrowthData(clinicId),
+        getPatientGrowthDataWeekly(clinicId),
+        getTopServicesData(clinicId),
+        getMonthlyComparisonData(clinicId)
     ])
 
     return (
@@ -214,11 +235,17 @@ export default async function DashboardPage() {
 
                 {/* Charts Grid */}
                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-7">
-                    <RevenueChart data={revenueData} />
+                    <RevenueChart weeklyData={revenueDataWeekly} monthlyData={revenueDataMonthly} />
                     <AppointmentStatusChart data={appointmentStatusData} />
                 </div>
 
-                <PatientGrowthChart data={patientGrowthData} />
+                {/* Additional Charts */}
+                <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-7">
+                    <TopServicesChart data={topServicesData} />
+                    <MonthlyComparisonChart data={monthlyComparisonData} />
+                </div>
+
+                <PatientGrowthChart weeklyData={patientGrowthDataWeekly} monthlyData={patientGrowthDataMonthly} />
             </div>
         </div>
     )

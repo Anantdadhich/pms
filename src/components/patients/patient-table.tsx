@@ -1,38 +1,26 @@
 "use client"
 
-import { useState } from "react"
-import {
-    useReactTable,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    flexRender,
-    type ColumnDef,
-    type SortingState,
-} from "@tanstack/react-table"
 import { format } from "date-fns"
-import { ChevronLeft, ChevronRight, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { MoreHorizontal, Eye, Edit, Trash2, Phone, Mail } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { cn, calculateAge } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 interface Patient {
     id: string
     firstName: string
     lastName: string
+    email?: string
     phone: string
-    email?: string | null
     dateOfBirth: Date
-    lastVisitDate?: Date | null
-    gender?: string | null
+    gender?: string
+    lastVisitDate?: Date
 }
 
 interface PatientTableProps {
@@ -43,207 +31,183 @@ interface PatientTableProps {
 }
 
 export function PatientTable({ patients, onView, onEdit, onDelete }: PatientTableProps) {
-    const [sorting, setSorting] = useState<SortingState>([])
-    const [globalFilter, setGlobalFilter] = useState("")
+    const calculateAge = (dob: Date) => {
+        const today = new Date()
+        const birthDate = new Date(dob)
+        let age = today.getFullYear() - birthDate.getFullYear()
+        const monthDiff = today.getMonth() - birthDate.getMonth()
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--
+        }
+        return age
+    }
 
-    const columns: ColumnDef<Patient>[] = [
-        {
-            accessorKey: "name",
-            header: "Patient Name",
-            accessorFn: (row) => `${row.firstName} ${row.lastName}`,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm">
-                        {row.original.firstName[0]}{row.original.lastName[0]}
-                    </div>
-                    <div>
-                        <p className="font-medium">{row.original.firstName} {row.original.lastName}</p>
-                        <p className="text-sm text-muted-foreground">{row.original.email || "No email"}</p>
-                    </div>
-                </div>
-            ),
-        },
-        {
-            accessorKey: "phone",
-            header: "Phone",
-            cell: ({ row }) => (
-                <span className="font-mono text-sm">{row.original.phone}</span>
-            ),
-        },
-        {
-            accessorKey: "age",
-            header: "Age",
-            accessorFn: (row) => calculateAge(row.dateOfBirth),
-            cell: ({ row }) => (
-                <span>{calculateAge(row.original.dateOfBirth)} yrs</span>
-            ),
-        },
-        {
-            accessorKey: "gender",
-            header: "Gender",
-            cell: ({ row }) => (
-                <Badge variant="secondary">
-                    {row.original.gender || "—"}
-                </Badge>
-            ),
-        },
-        {
-            accessorKey: "lastVisitDate",
-            header: "Last Visit",
-            cell: ({ row }) => (
-                <span className="text-sm text-muted-foreground">
-                    {row.original.lastVisitDate
-                        ? format(new Date(row.original.lastVisitDate), "dd MMM yyyy")
-                        : "Never"}
-                </span>
-            ),
-        },
-        {
-            id: "actions",
-            cell: ({ row }) => (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onView(row.original)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(row.original)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => onDelete(row.original)}
-                            className="text-destructive focus:text-destructive"
-                        >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            ),
-        },
-    ]
-
-    const table = useReactTable({
-        data: patients,
-        columns,
-        state: {
-            sorting,
-            globalFilter,
-        },
-        onSortingChange: setSorting,
-        onGlobalFilterChange: setGlobalFilter,
-        getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        initialState: {
-            pagination: {
-                pageSize: 10,
-            },
-        },
-    })
+    const isActive = (lastVisit?: Date) => {
+        if (!lastVisit) return false
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        return new Date(lastVisit) >= thirtyDaysAgo
+    }
 
     return (
-        <div className="space-y-4">
-            {/* Search */}
-            <div className="flex items-center justify-between">
-                <Input
-                    placeholder="Search by name or phone..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="max-w-sm"
-                />
-                <div className="text-sm text-muted-foreground">
-                    {table.getFilteredRowModel().rows.length} patients
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="rounded-lg border">
-                <table className="w-full">
-                    <thead>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <tr key={headerGroup.id} className="border-b bg-muted/50">
-                                {headerGroup.headers.map((header) => (
-                                    <th
-                                        key={header.id}
-                                        className="px-4 py-3 text-left text-sm font-medium text-muted-foreground"
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </th>
-                                ))}
+        <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block rounded-md border">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-muted/50">
+                            <tr className="border-b">
+                                <th className="px-4 py-3 text-left text-sm font-medium">Patient</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Contact</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Age/Gender</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Last Visit</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                                <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
                             </tr>
-                        ))}
-                    </thead>
-                    <tbody>
-                        {table.getRowModel().rows.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <tr
-                                    key={row.id}
-                                    className="border-b transition-colors hover:bg-muted/50"
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <td key={cell.id} className="px-4 py-3">
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
+                        </thead>
+                        <tbody>
+                            {patients.map((patient) => (
+                                <tr key={patient.id} className="border-b hover:bg-muted/30 transition-colors">
+                                    <td className="px-4 py-3">
+                                        <div className="font-medium">
+                                            {patient.firstName} {patient.lastName}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex flex-col gap-1 text-sm">
+                                            <div className="flex items-center gap-1 text-muted-foreground">
+                                                <Phone className="h-3 w-3" />
+                                                {patient.phone}
+                                            </div>
+                                            {patient.email && (
+                                                <div className="flex items-center gap-1 text-muted-foreground">
+                                                    <Mail className="h-3 w-3" />
+                                                    {patient.email}
+                                                </div>
                                             )}
-                                        </td>
-                                    ))}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {calculateAge(patient.dateOfBirth)}y
+                                        {patient.gender && ` • ${patient.gender}`}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                                        {patient.lastVisitDate
+                                            ? format(new Date(patient.lastVisitDate), "MMM dd, yyyy")
+                                            : "Never"}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <Badge variant={isActive(patient.lastVisitDate) ? "default" : "secondary"}>
+                                            {isActive(patient.lastVisitDate) ? "Active" : "Inactive"}
+                                        </Badge>
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => onView(patient)}>
+                                                    <Eye className="mr-2 h-4 w-4" />
+                                                    View Details
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onEdit(patient)}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => onDelete(patient)}
+                                                    className="text-destructive"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td
-                                    colSpan={columns.length}
-                                    className="px-4 py-8 text-center text-muted-foreground"
-                                >
-                                    No patients found.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                    Page {table.getState().pagination.pageIndex + 1} of{" "}
-                    {table.getPageCount()}
-                </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+                {patients.map((patient) => (
+                    <Card key={patient.id} className="overflow-hidden">
+                        <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-base">
+                                        {patient.firstName} {patient.lastName}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {calculateAge(patient.dateOfBirth)}y
+                                        {patient.gender && ` • ${patient.gender}`}
+                                    </p>
+                                </div>
+                                <Badge variant={isActive(patient.lastVisitDate) ? "default" : "secondary"}>
+                                    {isActive(patient.lastVisitDate) ? "Active" : "Inactive"}
+                                </Badge>
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Phone className="h-4 w-4 text-muted-foreground" />
+                                    <a href={`tel:${patient.phone}`} className="text-primary hover:underline">
+                                        {patient.phone}
+                                    </a>
+                                </div>
+                                {patient.email && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Mail className="h-4 w-4 text-muted-foreground" />
+                                        <a href={`mailto:${patient.email}`} className="text-primary hover:underline">
+                                            {patient.email}
+                                        </a>
+                                    </div>
+                                )}
+                                <div className="text-sm text-muted-foreground">
+                                    <span className="font-medium">Last Visit:</span>{" "}
+                                    {patient.lastVisitDate
+                                        ? format(new Date(patient.lastVisitDate), "MMM dd, yyyy")
+                                        : "Never"}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => onView(patient)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1"
+                                >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View
+                                </Button>
+                                <Button
+                                    onClick={() => onEdit(patient)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1"
+                                >
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                </Button>
+                                <Button
+                                    onClick={() => onDelete(patient)}
+                                    variant="destructive"
+                                    size="sm"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
-        </div>
+        </>
     )
 }

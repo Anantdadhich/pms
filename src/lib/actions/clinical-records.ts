@@ -2,7 +2,18 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import type { ClinicalRecordFormValues } from "@/lib/validations/treatment"
+
+// Type definition for clinical record form
+type ClinicalRecordFormValues = {
+    appointmentId: string
+    patientId: string
+    procedureId: string
+    toothNumber?: string
+    surface?: string
+    diagnosis?: string
+    notes?: string
+    costOverride?: number
+}
 
 export async function getClinicalRecords(patientId: string) {
     const records = await prisma.clinicalRecord.findMany({

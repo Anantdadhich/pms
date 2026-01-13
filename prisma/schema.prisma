@@ -14,16 +14,17 @@ model Clinic {
   address   String?
   phone     String?
   email     String?
-  settings  Json? // Clinic-specific settings (timezone, currency, etc.)
+  settings  Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  users        User[]
-  patients     Patient[]
-  appointments Appointment[]
-  treatments   TreatmentCatalog[]
-  invoices     Invoice[]
+  users          User[]
+  patients       Patient[]
+  appointments   Appointment[]
+  treatments     TreatmentCatalog[]
+  invoices       Invoice[]
+  clinicSettings ClinicSettings?
 }
 
 enum UserRole {
@@ -136,17 +137,13 @@ model Appointment {
   @@index([status])
 }
 
-// ============================================
-// CLINICAL RECORDS (HEART OF THE APP)
-// ============================================
-
 model ClinicalRecord {
   id           String   @id @default(uuid())
-  toothNumber  String? // FDI notation: "18", "21", etc.
-  surface      String? // "MOD", "B", "L", "O", "D", "M"
+  toothNumber  String?
+  surface      String?
   diagnosis    String?
   notes        String?
-  costOverride Decimal? // Manual price override
+  costOverride Decimal?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -170,18 +167,14 @@ model ClinicalRecord {
   @@index([toothNumber])
 }
 
-// ============================================
-// TREATMENT CATALOG (MENU OF SERVICES)
-// ============================================
-
 model TreatmentCatalog {
   id           String   @id @default(uuid())
-  code         String? // Service code (e.g., "D2391")
-  name         String // "Root Canal (Molar)"
+  code         String?
+  name         String
   description  String?
   standardCost Decimal
-  category     String // "Restorative", "Cosmetic", "Preventive", "Endodontic"
-  duration     Int? // Estimated duration in minutes
+  category     String
+  duration     Int?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -196,10 +189,6 @@ model TreatmentCatalog {
   @@index([category])
   @@index([isActive])
 }
-
-// ============================================
-// INVOICES & BILLING
-// ============================================
 
 enum InvoiceStatus {
   DRAFT
@@ -234,7 +223,6 @@ model Invoice {
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
 
-  // Relations
   items    InvoiceItem[]
   payments Payment[]
 
@@ -261,10 +249,6 @@ model InvoiceItem {
   @@index([invoiceId])
 }
 
-// ============================================
-// PAYMENTS (SPLIT PAYMENTS)
-// ============================================
-
 enum PaymentMethod {
   CASH
   CARD
@@ -278,7 +262,7 @@ model Payment {
   id        String        @id @default(uuid())
   amount    Decimal
   method    PaymentMethod
-  reference String? // Transaction ID, UPI ref, etc.
+  reference String?
   notes     String?
   paidAt    DateTime      @default(now())
 
@@ -288,10 +272,6 @@ model Payment {
   @@index([invoiceId])
   @@index([paidAt])
 }
-
-// ============================================
-// AUDIT LOG
-// ============================================
 
 model AuditLog {
   id         String   @id @default(uuid())
@@ -309,4 +289,41 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model ClinicSettings {
+  id       String @id @default(uuid())
+  clinicId String @unique
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  // Branding
+  logoUrl        String?
+  primaryColor   String?
+  secondaryColor String?
+
+  // Localization
+  timezone   String @default("Asia/Kolkata")
+  currency   String @default("INR")
+  dateFormat String @default("DD/MM/YYYY")
+
+  businessHours Json?
+
+  // Appointment Defaults
+  defaultAppointmentDuration    Int     @default(30)
+  bufferTimeBetweenAppointments Int     @default(0)
+  allowOnlineBooking            Boolean @default(false)
+
+  // Notification Settings
+  enableEmailNotifications Boolean @default(true)
+  enableSmsNotifications   Boolean @default(false)
+
+  // Invoice Settings
+  invoicePrefix String  @default("INV")
+  invoiceFooter String?
+  taxRate       Decimal @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId])
 }
