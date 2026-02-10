@@ -180,6 +180,17 @@ export async function importPatients(clinicId: string, patients: any[]) {
     }
 
     try {
+        // 1. Determine default Doctor ID
+        let defaultDoctorId = user.id
+        // If current user is not a doctor, find one
+        // (For simplicity, we assume user is a doctor or we pick the first doctor)
+        if (user.role !== "DOCTOR" && user.role !== "SUPERADMIN" && user.role !== "ADMIN") {
+            const firstDoctor = await prisma.user.findFirst({
+                where: { clinicId, role: "DOCTOR" }
+            })
+            if (firstDoctor) defaultDoctorId = firstDoctor.id
+        }
+
         // Validate and map data
         const validPatients = patients.map(p => {
             if (!p.firstName || !p.lastName || !p.phone) {
@@ -192,7 +203,18 @@ export async function importPatients(clinicId: string, patients: any[]) {
                 if (isNaN(dob.getTime())) dob = new Date()
             }
 
-            // Normalize phone number (remove spaces, dashes, etc.)
+            // Parse Next Appointment
+            let nextAppointmentDate: Date | null = null
+            if (p.nextAppointment || p.appointmentDate || p.scheduledAt) {
+                const dateStr = p.nextAppointment || p.appointmentDate || p.scheduledAt
+                const parsedDate = new Date(dateStr)
+                if (!isNaN(parsedDate.getTime())) {
+                    // If date is valid, check if it's in the future (optional, but good practice)
+                    nextAppointmentDate = parsedDate
+                }
+            }
+
+            // Normalize phone number
             const normalizedPhone = String(p.phone).replace(/[\s\-\(\)]/g, '')
 
             return {
@@ -204,6 +226,7 @@ export async function importPatients(clinicId: string, patients: any[]) {
                 gender: p.gender ? String(p.gender) : null,
                 address: p.address ? String(p.address) : null,
                 clinicId: clinicId,
+                nextAppointmentDate // Temporary field
             }
         }).filter(Boolean) as any[]
 
@@ -214,7 +237,7 @@ export async function importPatients(clinicId: string, patients: any[]) {
         // Get all phone numbers from the import
         const importPhones = validPatients.map(p => p.phone)
 
-        // Check for existing patients with same phone numbers in this clinic
+        // Check for existing patients
         const existingPatients = await prisma.patient.findMany({
             where: {
                 clinicId,
@@ -226,30 +249,59 @@ export async function importPatients(clinicId: string, patients: any[]) {
         const existingPhones = new Set(existingPatients.map(p => p.phone))
 
         // Filter out duplicates
-        const newPatients = validPatients.filter(p => !existingPhones.has(p.phone))
-        const skippedCount = validPatients.length - newPatients.length
+        const newPatientsToCreate = validPatients.filter(p => !existingPhones.has(p.phone))
+        const skippedCount = validPatients.length - newPatientsToCreate.length
 
-        if (newPatients.length === 0) {
+        if (newPatientsToCreate.length === 0) {
             return {
                 success: true,
                 count: 0,
                 skipped: skippedCount,
-                error: `All ${skippedCount} patients already exist in the system (matched by phone number).`
+                error: `All ${skippedCount} patients already exist in the system.`
             }
         }
 
-        const result = await prisma.patient.createMany({
-            data: newPatients,
-            skipDuplicates: true
+        // Detailed Transaction execution
+        let createdCount = 0
+        let appointmentCount = 0
+
+        await prisma.$transaction(async (tx) => {
+            for (const p of newPatientsToCreate) {
+                // Create Patient
+                const { nextAppointmentDate, ...patientData } = p
+
+                const createdPatient = await tx.patient.create({
+                    data: patientData
+                })
+                createdCount++
+
+                // Create Appointment if date exists
+                if (nextAppointmentDate) {
+                    await tx.appointment.create({
+                        data: {
+                            scheduledAt: nextAppointmentDate,
+                            patientId: createdPatient.id,
+                            clinicId: clinicId,
+                            doctorId: defaultDoctorId,
+                            status: "SCHEDULED",
+                            type: "General Consultation",
+                            notes: "Auto-created from patient import"
+                        }
+                    })
+                    appointmentCount++
+                }
+            }
         })
 
         revalidatePath("/patients")
         revalidatePath("/")
+        revalidatePath("/schedule")
 
         return {
             success: true,
-            count: result.count,
-            skipped: skippedCount
+            count: createdCount,
+            skipped: skippedCount,
+            appointmentCount
         }
     } catch (error) {
         console.error("Import failed:", error)

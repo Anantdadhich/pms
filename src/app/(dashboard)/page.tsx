@@ -242,7 +242,7 @@ export default async function DashboardPage() {
                 {/* Additional Charts */}
                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-7">
                     <TopServicesChart data={topServicesData} />
-                    <MonthlyComparisonChart data={monthlyComparisonData} />
+                    <MonthlyComparisonChart data={monthlyComparisonData} currentYear={new Date().getFullYear()} />
                 </div>
 
                 <PatientGrowthChart weeklyData={patientGrowthDataWeekly} monthlyData={patientGrowthDataMonthly} />

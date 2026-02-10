@@ -11,9 +11,10 @@ interface MonthlyComparisonChartProps {
         thisYear: number
         lastYear: number
     }>
+    currentYear?: number
 }
 
-export function MonthlyComparisonChart({ data }: MonthlyComparisonChartProps) {
+export function MonthlyComparisonChart({ data, currentYear = new Date().getFullYear() }: MonthlyComparisonChartProps) {
     return (
         <Card className="lg:col-span-3">
             <CardHeader>
@@ -61,7 +62,7 @@ export function MonthlyComparisonChart({ data }: MonthlyComparisonChartProps) {
                             dataKey="thisYear"
                             stroke="hsl(var(--primary))"
                             strokeWidth={2}
-                            name="2024"
+                            name={`${currentYear}`}
                             dot={{ fill: "hsl(var(--primary))" }}
                         />
                         <Line
@@ -70,7 +71,7 @@ export function MonthlyComparisonChart({ data }: MonthlyComparisonChartProps) {
                             stroke="hsl(var(--muted-foreground))"
                             strokeWidth={2}
                             strokeDasharray="5 5"
-                            name="2023"
+                            name={`${currentYear - 1}`}
                             dot={{ fill: "hsl(var(--muted-foreground))" }}
                         />
                     </LineChart>

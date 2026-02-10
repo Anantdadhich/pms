@@ -73,6 +73,7 @@ export function ImportPatientsDialog({ clinicId, onSuccess }: ImportPatientsDial
                     else if (key.includes('birth') || key.includes('dob')) record.dateOfBirth = values[index]
                     else if (key.includes('gender') || key.includes('sex')) record.gender = values[index]
                     else if (key.includes('address')) record.address = values[index]
+                    else if (key.includes('appointment') || key.includes('schedule')) record.nextAppointment = values[index]
                 })
 
                 if (record.firstName && record.lastName) {
@@ -103,7 +104,11 @@ export function ImportPatientsDialog({ clinicId, onSuccess }: ImportPatientsDial
             if (result.success) {
                 let description = `Successfully imported ${result.count} patients.`
                 if (result.skipped && result.skipped > 0) {
-                    description += ` Skipped ${result.skipped} duplicates (already exist by phone number).`
+                    description += ` Skipped ${result.skipped} duplicates.`
+                }
+                // @ts-ignore - appointmentCount is verified safe from server
+                if (result.appointmentCount && result.appointmentCount > 0) {
+                    description += ` Scheduled ${result.appointmentCount} appointments.`
                 }
 
                 toast({
@@ -146,7 +151,7 @@ export function ImportPatientsDialog({ clinicId, onSuccess }: ImportPatientsDial
                 <DialogHeader>
                     <DialogTitle>Import Patients</DialogTitle>
                     <DialogDescription>
-                        Upload a CSV file with columns: firstName, lastName, phone, dateOfBirth, email
+                        Upload a CSV file with columns: firstName, lastName, phone, dateOfBirth, email, nextAppointment (optional)
                     </DialogDescription>
                 </DialogHeader>
 

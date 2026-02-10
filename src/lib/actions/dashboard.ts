@@ -196,7 +196,7 @@ export async function getRevenueChartData(clinicId: string) {
     for (let i = 5; i >= 0; i--) {
         const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
         months.push({
-            label: d.toLocaleString('default', { month: 'short' }),
+            label: d.toLocaleString('default', { month: 'short', year: '2-digit' }),
             start: startOfMonth(d),
             end: endOfMonth(d)
         })
@@ -291,7 +291,7 @@ export async function getPatientGrowthData(clinicId: string) {
     for (let i = 5; i >= 0; i--) {
         const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
         months.push({
-            label: d.toLocaleString('default', { month: 'short' }),
+            label: d.toLocaleString('default', { month: 'short', year: '2-digit' }),
             start: startOfMonth(d),
             end: endOfMonth(d)
         })
