@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import type { CreateInvoiceValues, PaymentFormValues } from "@/lib/validations/invoice"
+import { createInvoiceSchema, paymentFormSchema, type CreateInvoiceValues, type PaymentFormValues } from "@/lib/validations/invoice"
 import { generateInvoiceNumber } from "@/lib/utils"
 
 // Helper to serialize Decimal to number
@@ -92,35 +92,38 @@ export async function getInvoiceById(id: string) {
 }
 
 export async function createInvoice(clinicId: string, data: CreateInvoiceValues) {
-    const subtotal = data.items.reduce(
+    // Server-side validation
+    const validated = createInvoiceSchema.parse(data)
+
+    const subtotal = validated.items.reduce(
         (sum, item) => sum + item.unitPrice * item.quantity,
         0
     )
 
-    let discount = data.discount || 0
-    if (data.discountType === "percentage") {
+    let discount = validated.discount || 0
+    if (validated.discountType === "percentage") {
         discount = (subtotal * discount) / 100
     }
 
-    const tax = data.tax || 0
+    const tax = validated.tax || 0
     const total = subtotal - discount + tax
 
     const invoice = await prisma.invoice.create({
         data: {
             invoiceNumber: generateInvoiceNumber(),
-            patientId: data.patientId,
-            appointmentId: data.appointmentId,
+            patientId: validated.patientId,
+            appointmentId: validated.appointmentId,
             clinicId,
             subtotal,
             discount,
-            discountType: data.discountType,
+            discountType: validated.discountType,
             tax,
             total,
             status: "PENDING",
-            dueDate: data.dueDate,
-            notes: data.notes,
+            dueDate: validated.dueDate,
+            notes: validated.notes,
             items: {
-                create: data.items.map((item) => ({
+                create: validated.items.map((item) => ({
                     description: item.description,
                     quantity: item.quantity,
                     unitPrice: item.unitPrice,
@@ -141,13 +144,16 @@ export async function createInvoice(clinicId: string, data: CreateInvoiceValues)
 }
 
 export async function recordPayment(data: PaymentFormValues) {
+    // Server-side validation
+    const validated = paymentFormSchema.parse(data)
+
     const payment = await prisma.payment.create({
         data: {
-            invoiceId: data.invoiceId,
-            amount: data.amount,
-            method: data.method as "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "INSURANCE" | "OTHER",
-            reference: data.reference,
-            notes: data.notes,
+            invoiceId: validated.invoiceId,
+            amount: validated.amount,
+            method: validated.method as "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "INSURANCE" | "OTHER",
+            reference: validated.reference,
+            notes: validated.notes,
         },
     })
 

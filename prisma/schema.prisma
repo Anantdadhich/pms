@@ -135,6 +135,8 @@ model Appointment {
   @@index([patientId])
   @@index([scheduledAt])
   @@index([status])
+  @@index([clinicId, status])
+  @@index([clinicId, scheduledAt])
 }
 
 model ClinicalRecord {

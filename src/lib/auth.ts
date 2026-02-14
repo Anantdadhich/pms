@@ -15,32 +15,47 @@ export async function getCurrentUser() {
     })
 
     // If no local user, create one with a clinic
+    // Wrapped in try/catch to handle race conditions on first login
     if (!user) {
         const clerkUser = await currentUser()
         if (!clerkUser) {
             return null
         }
 
-        // Create a clinic for this user
-        const clinic = await prisma.clinic.create({
-            data: {
-                name: `${clerkUser.firstName || 'My'}'s Clinic`,
-                email: clerkUser.emailAddresses[0]?.emailAddress || '',
-            },
-        })
+        try {
+            // Use a transaction to create clinic + user atomically
+            user = await prisma.$transaction(async (tx) => {
+                const clinic = await tx.clinic.create({
+                    data: {
+                        name: `${clerkUser.firstName || 'My'}'s Clinic`,
+                        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+                    },
+                })
 
-        // Create the user
-        user = await prisma.user.create({
-            data: {
-                clerkId: userId,
-                email: clerkUser.emailAddresses[0]?.emailAddress || '',
-                firstName: clerkUser.firstName || 'User',
-                lastName: clerkUser.lastName || '',
-                avatarUrl: clerkUser.imageUrl,
-                clinicId: clinic.id,
-            },
-            include: { clinic: true },
-        })
+                return await tx.user.create({
+                    data: {
+                        clerkId: userId,
+                        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+                        firstName: clerkUser.firstName || 'User',
+                        lastName: clerkUser.lastName || '',
+                        avatarUrl: clerkUser.imageUrl,
+                        clinicId: clinic.id,
+                    },
+                    include: { clinic: true },
+                })
+            })
+        } catch (error: any) {
+            // Handle race condition: another request already created this user
+            if (error?.code === 'P2002') {
+                // Unique constraint violation — user was created by a parallel request
+                user = await prisma.user.findUnique({
+                    where: { clerkId: userId },
+                    include: { clinic: true },
+                })
+            } else {
+                throw error
+            }
+        }
     }
 
     return user

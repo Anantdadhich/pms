@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getCurrentUser } from "@/lib/auth"
-import type { AppointmentFormValues } from "@/lib/validations/appointment"
+import { appointmentFormSchema, type AppointmentFormValues } from "@/lib/validations/appointment"
 
 export async function getAppointments(
     clinicId: string,
@@ -87,9 +87,12 @@ export async function createAppointment(
     const user = await getCurrentUser()
     if (!user) throw new Error("Unauthorized")
 
+    // Server-side validation
+    const validated = appointmentFormSchema.parse(data)
+
     const appointment = await prisma.appointment.create({
         data: {
-            ...data,
+            ...validated,
             clinicId,
             doctorId: user.id, // Auto-assign current user
             status: "SCHEDULED",

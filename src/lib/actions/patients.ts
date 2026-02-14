@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getCurrentUser } from "@/lib/auth"
-import type { PatientFormValues } from "@/lib/validations/patient"
+import { patientFormSchema, type PatientFormValues } from "@/lib/validations/patient"
 
 // Serialization Helpers
 const serializeDecimal = (val: any) => (val !== null && val !== undefined ? Number(val) : null)
@@ -123,12 +123,15 @@ export async function getPatientById(id: string) {
 }
 
 export async function createPatient(clinicId: string, data: PatientFormValues) {
+    // Server-side validation — prevents bypassing frontend checks
+    const validated = patientFormSchema.parse(data)
+
     const patient = await prisma.patient.create({
         data: {
-            ...data,
-            dateOfBirth: new Date(data.dateOfBirth),
+            ...validated,
+            dateOfBirth: new Date(validated.dateOfBirth),
             clinicId,
-            email: data.email || null,
+            email: validated.email || null,
         },
     })
 
@@ -138,12 +141,15 @@ export async function createPatient(clinicId: string, data: PatientFormValues) {
 }
 
 export async function updatePatient(id: string, data: Partial<PatientFormValues>) {
+    // Partial validation — only validate provided fields
+    const validated = patientFormSchema.partial().parse(data)
+
     const patient = await prisma.patient.update({
         where: { id },
         data: {
-            ...data,
-            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-            email: data.email || null,
+            ...validated,
+            dateOfBirth: validated.dateOfBirth ? new Date(validated.dateOfBirth) : undefined,
+            email: validated.email || null,
         },
     })
 

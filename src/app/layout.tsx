@@ -16,8 +16,30 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "DentalPMS - Practice Management System",
-  description: "Modern dental practice management system for clinics",
+  title: {
+    default: "DentalPMS | Smart Practice Management for Modern Clinics",
+    template: "%s | DentalPMS",
+  },
+  description: "Streamline your dental clinic with our all-in-one Practice Management System. Manage patient records, appointments, billing, and treatment plans efficiently.",
+  keywords: [
+    "Dental PMS",
+    "Dental Practice Management",
+    "Clinic Software",
+    "Dentist Patient Management",
+    "Dental Scheduling Software",
+    "Electronic Health Records",
+    "Dentistry Automation",
+  ],
+  authors: [{ name: "DentalPMS Team" }],
+  creator: "DentalPMS",
+  applicationName: "DentalPMS",
+
+  icons: {
+    icon: "/pmslogo.png",
+    shortcut: "/pmslogo.png",
+    apple: "/pmslogo.png",
+  },
+
 }
 
 export default function RootLayout({
