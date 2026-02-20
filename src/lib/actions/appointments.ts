@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getCurrentUser } from "@/lib/auth"
 import { appointmentFormSchema, type AppointmentFormValues } from "@/lib/validations/appointment"
+import { sendSMS } from "@/lib/notifications"
 
 export async function getAppointments(
     clinicId: string,
@@ -102,6 +103,39 @@ export async function createAppointment(
             doctor: true,
         },
     })
+
+    // Send SMS Confirmation (Async - don't block the UI)
+    const patientPhone = validated.patientId ? (await prisma.patient.findUnique({ where: { id: validated.patientId } }))?.phone : null;
+
+    if (patientPhone) {
+        const message = `Hi, your appointment with Dr. ${user.lastName} is confirmed for ${validated.scheduledAt.toLocaleString()}.`
+
+        // 1. Log to DB as PENDING
+        const notification = await prisma.notification.create({
+            data: {
+                type: "SMS",
+                status: "PENDING",
+                recipient: patientPhone,
+                message,
+                clinicId,
+                patientId: validated.patientId,
+                appointmentId: appointment.id,
+            }
+        })
+
+        // 2. Send via Service (Mock or Real)
+        sendSMS({ to: patientPhone, body: message }).then(async (res) => {
+            await prisma.notification.update({
+                where: { id: notification.id },
+                data: {
+                    status: res.success ? "SENT" : "FAILED",
+                    providerId: res.messageId,
+                    error: res.error ? JSON.stringify(res.error) : null,
+                }
+            })
+        })
+    }
+
     revalidatePath("/schedule")
     revalidatePath("/") // Dashboard
     return appointment
@@ -232,4 +266,46 @@ export async function deleteAppointment(id: string) {
     revalidatePath(`/patients/${appointment.patientId}`)
     revalidatePath("/")
     return appointment
+}
+
+// Manual Reminder Trigger
+export async function sendManualReminder(appointmentId: string) {
+    const appointment = await prisma.appointment.findUnique({
+        where: { id: appointmentId },
+        include: { patient: true, doctor: true, clinic: true }
+    })
+
+    if (!appointment || !appointment.patient.phone) {
+        throw new Error("Patient phone number missing")
+    }
+
+    const message = `Reminder: You have an appointment with Dr. ${appointment.doctor.lastName} on ${appointment.scheduledAt.toLocaleString()}.`
+
+    // Log notification
+    const notification = await prisma.notification.create({
+        data: {
+            type: "SMS",
+            status: "PENDING",
+            recipient: appointment.patient.phone,
+            message,
+            clinicId: appointment.clinicId,
+            patientId: appointment.patientId,
+            appointmentId: appointment.id,
+        }
+    })
+
+    // Send SMS
+    const res = await sendSMS({ to: appointment.patient.phone, body: message })
+
+    // Update status
+    await prisma.notification.update({
+        where: { id: notification.id },
+        data: {
+            status: res.success ? "SENT" : "FAILED",
+            providerId: res.messageId,
+            error: res.error ? JSON.stringify(res.error) : null,
+        }
+    })
+
+    return { success: res.success }
 }

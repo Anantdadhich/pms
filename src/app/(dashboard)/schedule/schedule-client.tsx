@@ -12,10 +12,10 @@ import { ChevronLeft, ChevronRight, Clock, Filter, Eye, EyeOff, Edit, Check, X, 
 import { cn } from "@/lib/utils"
 import { getDoctors } from "@/lib/actions/users"
 import { getPatients } from "@/lib/actions/patients"
-import { createAppointment, updateAppointment, updateAppointmentStatus } from "@/lib/actions/appointments"
+import { createAppointment, updateAppointment, updateAppointmentStatus, sendManualReminder } from "@/lib/actions/appointments"
 import { generateInvoiceFromAppointment } from "@/lib/actions/invoices"
 import { useRouter } from "next/navigation"
-import { CreditCard } from "lucide-react"
+import { CreditCard, Bell } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -189,6 +189,22 @@ export function ScheduleClient({ clinicId, initialAppointments }: {
         } catch (error) {
             console.error("Failed to create invoice", error)
             alert("Failed to create invoice. Make sure clinical records exist for this appointment.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleSendReminder = async (appointmentId: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm("Send SMS reminder to patient?")) return
+
+        setIsLoading(true)
+        try {
+            await sendManualReminder(appointmentId)
+            alert("Reminder sent successfully!")
+        } catch (error) {
+            console.error("Failed to send reminder", error)
+            alert("Failed to send reminder.")
         } finally {
             setIsLoading(false)
         }
@@ -581,9 +597,19 @@ export function ScheduleClient({ clinicId, initialAppointments }: {
                                                                                     onClick={(e) => handleCreateInvoice(apt.id, e)}
                                                                                 >
                                                                                     <CreditCard className="h-3 w-3" />
+                                                                                    <CreditCard className="h-3 w-3" />
                                                                                     Bill
                                                                                 </Button>
                                                                             )}
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="ghost"
+                                                                                className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600"
+                                                                                onClick={(e) => handleSendReminder(apt.id, e)}
+                                                                                title="Send Reminder Now"
+                                                                            >
+                                                                                <Bell className="h-3.5 w-3.5" />
+                                                                            </Button>
                                                                         </div>
                                                                     </div>
                                                                 </div>

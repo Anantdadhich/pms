@@ -21,6 +21,8 @@ import {
     Plus,
 } from "lucide-react"
 import { calculateAge, formatCurrency } from "@/lib/utils"
+import { sendManualReminder } from "@/lib/actions/appointments"
+import { Bell } from "lucide-react"
 
 // Simple Odontogram placeholder
 const TOOTH_NUMBERS = {
@@ -31,6 +33,23 @@ const TOOTH_NUMBERS = {
 export function PatientDetailClient({ patient }: { patient: any }) {
     const router = useRouter()
     const [selectedTooth, setSelectedTooth] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleSendReminder = async (appointmentId: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm("Send SMS reminder to patient?")) return
+
+        setIsLoading(true)
+        try {
+            await sendManualReminder(appointmentId)
+            alert("Reminder sent successfully!")
+        } catch (error) {
+            console.error("Failed to send reminder", error)
+            alert("Failed to send reminder.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     // Derived data from real patient object
     const visits = patient.appointments || []
@@ -181,6 +200,16 @@ export function PatientDetailClient({ patient }: { patient: any }) {
                                                             {visit.doctor ? `Dr. ${visit.doctor.firstName} ${visit.doctor.lastName}` : 'No Doctor'}
                                                         </p>
                                                     </div>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600"
+                                                        onClick={(e) => handleSendReminder(visit.id, e)}
+                                                        title="Send Reminder Now"
+                                                        disabled={isLoading}
+                                                    >
+                                                        <Bell className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                                 <div className="space-y-1 text-sm">
                                                     {visit.chiefComplaint && <p><strong>Chief Complaint:</strong> {visit.chiefComplaint}</p>}

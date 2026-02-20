@@ -25,6 +25,7 @@ model Clinic {
   treatments     TreatmentCatalog[]
   invoices       Invoice[]
   clinicSettings ClinicSettings?
+  notifications  Notification[]
 }
 
 enum UserRole {
@@ -82,6 +83,7 @@ model Patient {
   appointments    Appointment[]
   clinicalRecords ClinicalRecord[]
   invoices        Invoice[]
+  notifications   Notification[]
 
   @@index([clinicId])
   @@index([phone])
@@ -129,6 +131,7 @@ model Appointment {
   // Relations
   clinicalRecords ClinicalRecord[]
   invoice         Invoice?
+  notifications   Notification[]
 
   @@index([clinicId])
   @@index([doctorId])
@@ -328,4 +331,39 @@ model ClinicSettings {
   updatedAt DateTime @updatedAt
 
   @@index([clinicId])
+}
+
+enum NotificationType {
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Notification {
+  id         String             @id @default(uuid())
+  type       NotificationType
+  status     NotificationStatus @default(PENDING)
+  recipient  String
+  message    String
+  providerId String? // e.g., Twilio Message SID
+  error      String?
+  createdAt  DateTime           @default(now())
+
+  // Relations
+  clinicId      String
+  clinic        Clinic       @relation(fields: [clinicId], references: [id])
+  patientId     String
+  patient       Patient      @relation(fields: [patientId], references: [id])
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([status])
 }
