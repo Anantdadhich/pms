@@ -19,10 +19,35 @@ import {
     AlertCircle,
     FileText,
     Plus,
+    Bell,
+    Edit,
+    Trash2
 } from "lucide-react"
 import { calculateAge, formatCurrency } from "@/lib/utils"
-import { sendManualReminder } from "@/lib/actions/appointments"
-import { Bell } from "lucide-react"
+import { sendManualReminder, createAppointment, updateAppointment, updateAppointmentStatus, deleteAppointment } from "@/lib/actions/appointments"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { AppointmentForm } from "@/components/appointments/appointment-form"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const TREATMENT_TYPES = [
+    "General Consultation",
+    "Dental Cleaning",
+    "Root Canal Treatment",
+    "Tooth Extraction",
+    "Dental Filling",
+    "Crown & Bridge",
+    "Teeth Whitening",
+    "Orthodontic Consultation",
+    "Dental Implant",
+    "Gum Treatment",
+    "Wisdom Tooth Removal",
+    "Dental X-Ray",
+    "Emergency Treatment",
+    "Follow-up Visit",
+    "Other"
+]
 
 // Simple Odontogram placeholder
 const TOOTH_NUMBERS = {
@@ -34,6 +59,90 @@ export function PatientDetailClient({ patient }: { patient: any }) {
     const router = useRouter()
     const [selectedTooth, setSelectedTooth] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [isNewVisitOpen, setIsNewVisitOpen] = useState(false)
+
+    // Edit appointment state
+    const [editingAppointment, setEditingAppointment] = useState<any | null>(null)
+    const [editForm, setEditForm] = useState({
+        date: "",
+        time: "",
+        type: "",
+        duration: 30,
+        notes: "",
+        status: "SCHEDULED" as any
+    })
+
+    const handleEditClick = (apt: any, e: React.MouseEvent) => {
+        e.stopPropagation()
+        const aptDate = new Date(apt.scheduledAt)
+        setEditForm({
+            date: format(aptDate, "yyyy-MM-dd"),
+            time: format(aptDate, "HH:mm"),
+            type: apt.type || "",
+            duration: apt.duration || 30,
+            notes: apt.notes || "",
+            status: apt.status || "SCHEDULED"
+        })
+        setEditingAppointment(apt)
+    }
+
+    const handleSaveEdit = async () => {
+        if (!editingAppointment) return
+        setIsLoading(true)
+        try {
+            const [hours, mins] = editForm.time.split(":").map(Number)
+            const newDate = new Date(editForm.date)
+            newDate.setHours(hours, mins, 0, 0)
+
+            await updateAppointment(editingAppointment.id, {
+                scheduledAt: newDate,
+                type: editForm.type,
+                duration: editForm.duration,
+                notes: editForm.notes
+            })
+
+            if (editForm.status !== editingAppointment.status) {
+                await updateAppointmentStatus(editingAppointment.id, editForm.status)
+            }
+
+            setEditingAppointment(null)
+            router.refresh()
+        } catch (error) {
+            console.error("Failed to update appointment", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleDeleteAppointment = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm("Are you sure you want to delete this appointment? This cannot be undone.")) return
+        
+        setIsLoading(true)
+        try {
+            await deleteAppointment(id)
+            router.refresh()
+        } catch (error) {
+            console.error("Failed to delete appointment", error)
+            alert("Failed to delete appointment.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleCreateAppointment = async (data: any) => {
+        setIsLoading(true)
+        try {
+            await createAppointment(patient.clinicId, data)
+            setIsNewVisitOpen(false)
+            router.refresh()
+        } catch (error) {
+            console.error("Failed to create appointment", error)
+            alert("Failed to create appointment.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     const handleSendReminder = async (appointmentId: string, e: React.MouseEvent) => {
         e.stopPropagation()
@@ -172,10 +281,123 @@ export function PatientDetailClient({ patient }: { patient: any }) {
                             <TabsContent value="overview" className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-semibold">Visit History</h3>
-                                    <Button size="sm" className="gap-1" onClick={() => router.push('/schedule')}>
+                                    <Button size="sm" className="gap-1" onClick={() => setIsNewVisitOpen(true)}>
                                         <Plus className="h-4 w-4" />
                                         New Visit
                                     </Button>
+                                    <Dialog open={isNewVisitOpen} onOpenChange={setIsNewVisitOpen}>
+                                        <DialogContent className="max-w-2xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Schedule New Visit</DialogTitle>
+                                            </DialogHeader>
+                                            <AppointmentForm
+                                                clinicId={patient.clinicId}
+                                                patients={[{ id: patient.id, firstName: patient.firstName, lastName: patient.lastName }]}
+                                                defaultValues={{ patientId: patient.id }}
+                                                onSubmit={handleCreateAppointment}
+                                                onCancel={() => setIsNewVisitOpen(false)}
+                                                isLoading={isLoading}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
+
+                                    {/* Edit Appointment Dialog */}
+                                    <Dialog open={!!editingAppointment} onOpenChange={(open) => !open && setEditingAppointment(null)}>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Edit Appointment</DialogTitle>
+                                                <DialogDescription>
+                                                    Modify the details for this scheduled visit.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="space-y-4 py-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="edit-date">Date</Label>
+                                                        <Input
+                                                            id="edit-date"
+                                                            type="date"
+                                                            value={editForm.date}
+                                                            onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="edit-time">Time</Label>
+                                                        <Input
+                                                            id="edit-time"
+                                                            type="time"
+                                                            value={editForm.time}
+                                                            onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="edit-type">Treatment Type</Label>
+                                                    <Select
+                                                        value={editForm.type}
+                                                        onValueChange={(value) => setEditForm({ ...editForm, type: value })}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select treatment" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {TREATMENT_TYPES.map((treatment) => (
+                                                                <SelectItem key={treatment} value={treatment}>
+                                                                    {treatment}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="edit-duration">Duration (minutes)</Label>
+                                                    <Input
+                                                        id="edit-duration"
+                                                        type="number"
+                                                        value={editForm.duration}
+                                                        onChange={(e) => setEditForm({ ...editForm, duration: parseInt(e.target.value) || 30 })}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Status</Label>
+                                                    <Select
+                                                        value={editForm.status}
+                                                        onValueChange={(value: any) => setEditForm({ ...editForm, status: value })}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select status" />
+                                                        </SelectTrigger>
+                                                        <SelectContent position="popper" side="bottom">
+                                                            <SelectItem value="SCHEDULED">🔵 Scheduled</SelectItem>
+                                                            <SelectItem value="CONFIRMED">✅ Confirmed</SelectItem>
+                                                            <SelectItem value="SEATED">🪑 Seated</SelectItem>
+                                                            <SelectItem value="IN_PROGRESS">🏥 In Progress</SelectItem>
+                                                            <SelectItem value="COMPLETED">✔️ Completed</SelectItem>
+                                                            <SelectItem value="CANCELLED">❌ Cancelled</SelectItem>
+                                                            <SelectItem value="NO_SHOW">⚠️ No Show</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="edit-notes">Notes</Label>
+                                                    <Input
+                                                        id="edit-notes"
+                                                        value={editForm.notes}
+                                                        onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                                        placeholder="Add any notes..."
+                                                    />
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button variant="outline" onClick={() => setEditingAppointment(null)}>
+                                                    Cancel
+                                                </Button>
+                                                <Button onClick={handleSaveEdit} disabled={isLoading}>
+                                                    {isLoading ? "Saving..." : "Save Changes"}
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
 
                                 {visits.length === 0 ? (
@@ -200,16 +422,38 @@ export function PatientDetailClient({ patient }: { patient: any }) {
                                                             {visit.doctor ? `Dr. ${visit.doctor.firstName} ${visit.doctor.lastName}` : 'No Doctor'}
                                                         </p>
                                                     </div>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600"
-                                                        onClick={(e) => handleSendReminder(visit.id, e)}
-                                                        title="Send Reminder Now"
-                                                        disabled={isLoading}
-                                                    >
-                                                        <Bell className="h-4 w-4" />
-                                                    </Button>
+                                                    <div className="flex items-center gap-1">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600"
+                                                            onClick={(e) => handleEditClick(visit, e)}
+                                                            title="Edit Appointment"
+                                                            disabled={isLoading}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-destructive"
+                                                            onClick={(e) => handleDeleteAppointment(visit.id, e)}
+                                                            title="Delete Appointment"
+                                                            disabled={isLoading}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600"
+                                                            onClick={(e) => handleSendReminder(visit.id, e)}
+                                                            title="Send Reminder Now"
+                                                            disabled={isLoading}
+                                                        >
+                                                            <Bell className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-1 text-sm">
                                                     {visit.chiefComplaint && <p><strong>Chief Complaint:</strong> {visit.chiefComplaint}</p>}
@@ -226,6 +470,17 @@ export function PatientDetailClient({ patient }: { patient: any }) {
                                                                 ))}
                                                             </ul>
                                                         </>
+                                                    )}
+
+                                                    {visit.notifications && visit.notifications.length > 0 && (
+                                                        <div className="mt-4 pt-3 border-t flex flex-wrap gap-2 items-center">
+                                                            <span className="text-muted-foreground text-xs font-medium">Messages:</span>
+                                                            {visit.notifications.map((notif: any) => (
+                                                                <Badge key={notif.id} variant={notif.status === 'SENT' ? 'default' : notif.status === 'FAILED' ? 'destructive' : 'secondary'} className="text-[10px] uppercase">
+                                                                    {notif.type}: {notif.status}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
                                                     )}
                                                 </div>
                                             </CardContent>

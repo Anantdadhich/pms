@@ -31,6 +31,7 @@ const serializeClinicalRecord = (rec: any) => ({
 const serializeAppointment = (apt: any) => ({
     ...apt,
     clinicalRecords: apt.clinicalRecords?.map(serializeClinicalRecord),
+    notifications: apt.notifications,
 })
 
 const serializePatient = (patient: any) => {
@@ -106,6 +107,9 @@ export async function getPatientById(id: string) {
                 take: 10,
                 include: {
                     doctor: true,
+                    notifications: {
+                        orderBy: { createdAt: "desc" },
+                    },
                     clinicalRecords: {
                         include: {
                             procedure: true,

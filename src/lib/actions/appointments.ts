@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { getCurrentUser } from "@/lib/auth"
 import { appointmentFormSchema, type AppointmentFormValues } from "@/lib/validations/appointment"
 import { sendSMS } from "@/lib/notifications"
+import { Client } from "@upstash/qstash"
 
 export async function getAppointments(
     clinicId: string,
@@ -20,8 +21,7 @@ export async function getAppointments(
     const { doctorId, status, startDate, endDate, query } = options || {}
 
 
-    // If query is present, we want to search ALL appointments unless specific dates are given
-    // If query is NOT present, default to +/- 30 days window
+
     let dateFilter: any = {}
 
     if (startDate || endDate) {
@@ -30,7 +30,7 @@ export async function getAppointments(
             lte: endDate
         }
     } else if (!query) {
-        // Default window only when NOT searching
+
         const defaultStart = new Date(new Date().setDate(new Date().getDate() - 30))
         const defaultEnd = new Date(new Date().setDate(new Date().getDate() + 30))
         dateFilter = {
@@ -75,7 +75,7 @@ export async function getAppointments(
             patient: true,
             doctor: true,
         },
-        orderBy: { scheduledAt: "desc" }, // Show newest first when searching
+        orderBy: { scheduledAt: "desc" },
     })
 
     return appointments
@@ -88,29 +88,32 @@ export async function createAppointment(
     const user = await getCurrentUser()
     if (!user) throw new Error("Unauthorized")
 
-    // Server-side validation
+
     const validated = appointmentFormSchema.parse(data)
 
     const appointment = await prisma.appointment.create({
         data: {
             ...validated,
             clinicId,
-            doctorId: user.id, // Auto-assign current user
+            doctorId: user.id,
             status: "SCHEDULED",
         },
         include: {
             patient: true,
             doctor: true,
+            clinic: true,
         },
     })
 
-    // Send SMS Confirmation (Async - don't block the UI)
+
     const patientPhone = validated.patientId ? (await prisma.patient.findUnique({ where: { id: validated.patientId } }))?.phone : null;
 
     if (patientPhone) {
-        const message = `Hi, your appointment with Dr. ${user.lastName} is confirmed for ${validated.scheduledAt.toLocaleString()}.`
+        const clinicName = appointment.clinic?.name || "our clinic";
+        const prettyDateTime = validated.scheduledAt.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+        const message = `Hi ${appointment.patient.firstName}, your appointment at ${clinicName} is confirmed for ${prettyDateTime}.`
 
-        // 1. Log to DB as PENDING
+
         const notification = await prisma.notification.create({
             data: {
                 type: "SMS",
@@ -123,7 +126,7 @@ export async function createAppointment(
             }
         })
 
-        // 2. Send via Service (Mock or Real)
+
         sendSMS({ to: patientPhone, body: message }).then(async (res) => {
             await prisma.notification.update({
                 where: { id: notification.id },
@@ -134,6 +137,60 @@ export async function createAppointment(
                 }
             })
         })
+    }
+
+
+    if (patientPhone && process.env.QSTASH_TOKEN) {
+        try {
+            const qstashClient = new Client({ token: process.env.QSTASH_TOKEN })
+
+            const appointmentDate = new Date(validated.scheduledAt)
+            const reminderTime = new Date(appointmentDate)
+            reminderTime.setHours(reminderTime.getHours() - 24)
+
+
+            if (reminderTime > new Date()) {
+                const prettyTime = appointmentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const clinicName = appointment.clinic?.name || "our clinic";
+                const reminderMessage = `Hi ${appointment.patient.firstName}, this is a reminder for your appointment at ${clinicName} tomorrow at ${prettyTime}.`
+
+                const job = await prisma.smsJob.create({
+                    data: {
+                        type: "REMINDER",
+                        status: "SCHEDULED",
+                        scheduledFor: reminderTime,
+                        patientId: validated.patientId,
+                        appointmentId: appointment.id,
+                        qstashId: `pending_${Date.now()}`
+                    }
+                })
+
+
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+
+                const res = await qstashClient.publishJSON({
+                    url: `${baseUrl}/api/webhooks/send-sms`,
+                    body: {
+                        jobId: job.id,
+                        phone: patientPhone,
+                        message: reminderMessage,
+                        clinicId,
+                        patientId: validated.patientId,
+                        appointmentId: appointment.id
+                    },
+                    notBefore: Math.floor(reminderTime.getTime() / 1000)
+                })
+
+                if (res && res.messageId) {
+                    await prisma.smsJob.update({
+                        where: { id: job.id },
+                        data: { qstashId: res.messageId }
+                    })
+                }
+            }
+        } catch (error) {
+            console.error(" Failed to schedule QStash reminder:", error)
+        }
     }
 
     revalidatePath("/schedule")
@@ -150,7 +207,7 @@ export async function updateAppointmentStatus(
         data: { status },
     })
 
-    // Update patient's last visit date if completed
+
     if (status === "COMPLETED") {
         await prisma.patient.update({
             where: { id: appointment.patientId },
@@ -158,7 +215,7 @@ export async function updateAppointmentStatus(
         })
     }
     revalidatePath("/schedule")
-    revalidatePath("/") // Dashboard
+    revalidatePath("/")
     return appointment
 }
 
@@ -207,7 +264,6 @@ export async function getTodayAppointments(clinicId: string) {
     return appointments
 }
 
-// Update appointment details (date, time, type, notes, duration)
 export async function updateAppointment(
     id: string,
     data: {
@@ -218,7 +274,7 @@ export async function updateAppointment(
         doctorId?: string
     }
 ) {
-    // Build update object only with defined values
+
     const updateData: any = {}
     if (data.scheduledAt !== undefined) updateData.scheduledAt = data.scheduledAt
     if (data.type !== undefined) updateData.type = data.type
@@ -243,7 +299,7 @@ export async function updateAppointment(
     return appointment
 }
 
-// Get all appointments for a specific patient
+
 export async function getPatientAppointments(patientId: string) {
     const appointments = await prisma.appointment.findMany({
         where: { patientId },
@@ -256,7 +312,6 @@ export async function getPatientAppointments(patientId: string) {
     return appointments
 }
 
-// Delete/Cancel appointment
 export async function deleteAppointment(id: string) {
     const appointment = await prisma.appointment.delete({
         where: { id },
@@ -268,7 +323,7 @@ export async function deleteAppointment(id: string) {
     return appointment
 }
 
-// Manual Reminder Trigger
+
 export async function sendManualReminder(appointmentId: string) {
     const appointment = await prisma.appointment.findUnique({
         where: { id: appointmentId },
@@ -279,9 +334,11 @@ export async function sendManualReminder(appointmentId: string) {
         throw new Error("Patient phone number missing")
     }
 
-    const message = `Reminder: You have an appointment with Dr. ${appointment.doctor.lastName} on ${appointment.scheduledAt.toLocaleString()}.`
+    const clinicName = appointment.clinic?.name || "our clinic";
+    const prettyDateTime = appointment.scheduledAt.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+    const message = `Hi ${appointment.patient.firstName}, this is a reminder for your upcoming appointment at ${clinicName} on ${prettyDateTime}.`
 
-    // Log notification
+
     const notification = await prisma.notification.create({
         data: {
             type: "SMS",
@@ -294,10 +351,10 @@ export async function sendManualReminder(appointmentId: string) {
         }
     })
 
-    // Send SMS
+
     const res = await sendSMS({ to: appointment.patient.phone, body: message })
 
-    // Update status
+
     await prisma.notification.update({
         where: { id: notification.id },
         data: {
