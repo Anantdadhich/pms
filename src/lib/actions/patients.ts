@@ -140,7 +140,7 @@ export async function createPatient(clinicId: string, data: PatientFormValues) {
     })
 
     revalidatePath("/patients")
-    revalidatePath("/") // Dashboard
+    revalidatePath("/dashboard") // Dashboard
     return patient
 }
 
@@ -159,7 +159,7 @@ export async function updatePatient(id: string, data: Partial<PatientFormValues>
 
     revalidatePath("/patients")
     revalidatePath(`/patients/${id}`)
-    revalidatePath("/") // Dashboard
+    revalidatePath("/dashboard") // Dashboard
     return patient
 }
 
@@ -169,7 +169,7 @@ export async function deletePatient(id: string) {
     })
 
     revalidatePath("/patients")
-    revalidatePath("/") // Dashboard
+    revalidatePath("/dashboard") // Dashboard
 }
 
 export async function updateLastVisitDate(patientId: string) {
@@ -304,7 +304,7 @@ export async function importPatients(clinicId: string, patients: any[]) {
         })
 
         revalidatePath("/patients")
-        revalidatePath("/")
+        revalidatePath("/dashboard")
         revalidatePath("/schedule")
 
         return {

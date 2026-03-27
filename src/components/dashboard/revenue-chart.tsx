@@ -46,19 +46,19 @@ export function RevenueChart({ weeklyData, monthlyData }: RevenueChartProps) {
                         const heightPercentage = Math.round((item.value / maxValue) * 100)
                         return (
                             <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
-                                <div className="relative w-full flex items-end justify-center h-full bg-muted/20 rounded-t-sm overflow-hidden">
+                                <div className="relative w-full flex items-end justify-center h-full bg-gray-50/50 rounded-lg overflow-hidden border border-gray-100/50">
                                     {/* Bar */}
                                     <div
-                                        className="w-full mx-1 bg-primary/90 rounded-t-sm transition-all duration-500 ease-out group-hover:bg-primary"
+                                        className="w-full mx-1 bg-gradient-to-t from-cyan-400 to-cyan-500 rounded-t-md transition-all duration-500 ease-out group-hover:from-cyan-500 group-hover:to-cyan-600 shadow-sm"
                                         style={{ height: `${heightPercentage}%` }}
                                     >
                                         {/* Tooltip on hover */}
-                                        <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs rounded px-2 py-1 shadow-md transition-opacity whitespace-nowrap border z-10 pointer-events-none">
+                                        <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[12px] font-medium rounded-lg px-2.5 py-1.5 shadow-xl transition-opacity whitespace-nowrap border border-gray-800 z-10 pointer-events-none">
                                             {formatCurrency(item.value)}
                                         </div>
                                     </div>
                                 </div>
-                                <span className="text-xs text-muted-foreground font-medium">{item.name}</span>
+                                <span className="text-[12px] text-gray-500 font-medium">{item.name}</span>
                             </div>
                         )
                     })}

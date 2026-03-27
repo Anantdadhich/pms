@@ -32,22 +32,30 @@ export function MonthlyComparisonChart({ data, currentYear = new Date().getFullY
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis
                             dataKey="month"
-                            className="text-xs"
-                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                            className="text-[12px]"
+                            tick={{ fill: "#6b7280" }}
+                            axisLine={false}
+                            tickLine={false}
+                            dy={10}
                         />
                         <YAxis
-                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                            tick={{ fill: "#6b7280" }}
                             tickFormatter={(value) => formatCurrency(value)}
+                            className="text-[12px]"
+                            axisLine={false}
+                            tickLine={false}
+                            dx={-10}
                         />
                         <Tooltip
                             content={({ active, payload }) => {
                                 if (active && payload && payload.length) {
                                     return (
-                                        <div className="rounded-lg border bg-background p-3 shadow-lg">
-                                            <div className="font-semibold mb-2">{payload[0].payload.month}</div>
+                                        <div className="rounded-xl border border-gray-100 bg-white/95 backdrop-blur-sm p-4 shadow-xl">
+                                            <div className="font-semibold text-gray-900 mb-2">{payload[0].payload.month}</div>
                                             {payload.map((entry) => (
-                                                <div key={entry.name} className="text-sm" style={{ color: entry.color }}>
-                                                    {entry.name}: {formatCurrency(entry.value as number)}
+                                                <div key={entry.name} className="flex justify-between gap-6 text-[13px] font-medium" style={{ color: entry.color }}>
+                                                    <span>{entry.name}:</span>
+                                                    <span>{formatCurrency(entry.value as number)}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -56,23 +64,25 @@ export function MonthlyComparisonChart({ data, currentYear = new Date().getFullY
                                 return null
                             }}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{ paddingTop: "20px", fontSize: "13px" }} />
                         <Line
                             type="monotone"
                             dataKey="thisYear"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth={2}
+                            stroke="#0ea5e9"
+                            strokeWidth={3}
                             name={`${currentYear}`}
-                            dot={{ fill: "hsl(var(--primary))" }}
+                            dot={{ fill: "#0ea5e9", r: 4, strokeWidth: 0 }}
+                            activeDot={{ r: 6, stroke: "#0ea5e9", strokeWidth: 2, fill: "white" }}
                         />
                         <Line
                             type="monotone"
                             dataKey="lastYear"
-                            stroke="hsl(var(--muted-foreground))"
-                            strokeWidth={2}
-                            strokeDasharray="5 5"
+                            stroke="#94a3b8"
+                            strokeWidth={3}
+                            strokeDasharray="6 6"
                             name={`${currentYear - 1}`}
-                            dot={{ fill: "hsl(var(--muted-foreground))" }}
+                            dot={{ fill: "#94a3b8", r: 4, strokeWidth: 0 }}
+                            activeDot={{ r: 6, stroke: "#94a3b8", strokeWidth: 2, fill: "white" }}
                         />
                     </LineChart>
                 </ResponsiveContainer>

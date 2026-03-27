@@ -194,7 +194,7 @@ export async function createAppointment(
     }
 
     revalidatePath("/schedule")
-    revalidatePath("/") // Dashboard
+    revalidatePath("/dashboard") // Dashboard
     return appointment
 }
 
@@ -215,7 +215,7 @@ export async function updateAppointmentStatus(
         })
     }
     revalidatePath("/schedule")
-    revalidatePath("/")
+    revalidatePath("/dashboard")
     return appointment
 }
 
@@ -295,7 +295,7 @@ export async function updateAppointment(
 
     revalidatePath("/schedule")
     revalidatePath(`/patients/${appointment.patientId}`)
-    revalidatePath("/") // Dashboard
+    revalidatePath("/dashboard") // Dashboard
     return appointment
 }
 
@@ -319,7 +319,7 @@ export async function deleteAppointment(id: string) {
 
     revalidatePath("/schedule")
     revalidatePath(`/patients/${appointment.patientId}`)
-    revalidatePath("/")
+    revalidatePath("/dashboard")
     return appointment
 }
 

@@ -167,22 +167,22 @@ export function PatientsClient({ initialPatients, clinicId }: PatientsClientProp
                 </div>
             </Header>
 
-            {/* Search and Filter Bar */}
-            <div className="border-b bg-muted/30 px-6 py-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Search and Filter Bar - Glassmorphic Toolbar */}
+            <div className="px-6 mb-6">
+                <div className="bg-white/60 backdrop-blur-2xl border border-white shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[20px] p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     {/* Search */}
                     <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <Input
-                            placeholder="Search by name, phone, or email..."
+                            placeholder="Search patients..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 pr-9"
+                            className="pl-10 pr-10 h-10 rounded-xl border-gray-100 bg-white/50 focus:bg-white transition-all shadow-sm focus-visible:ring-cyan-500/20"
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 transition-colors"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -190,31 +190,31 @@ export function PatientsClient({ initialPatients, clinicId }: PatientsClientProp
                     </div>
 
                     {/* Filters */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[140px] h-10 rounded-xl border-gray-100 bg-white/50 hover:bg-white transition-all shadow-sm">
                                 <SelectValue placeholder="Status" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="active">Active (30d)</SelectItem>
-                                <SelectItem value="inactive">Inactive</SelectItem>
+                            <SelectContent className="rounded-xl border-gray-100 shadow-lg">
+                                <SelectItem value="all" className="rounded-lg">All Status</SelectItem>
+                                <SelectItem value="active" className="rounded-lg">Active (30d)</SelectItem>
+                                <SelectItem value="inactive" className="rounded-lg">Inactive</SelectItem>
                             </SelectContent>
                         </Select>
 
                         <Select value={sortBy} onValueChange={setSortBy}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[140px] h-10 rounded-xl border-gray-100 bg-white/50 hover:bg-white transition-all shadow-sm">
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="recent">Most Recent</SelectItem>
-                                <SelectItem value="name">Name (A-Z)</SelectItem>
-                                <SelectItem value="lastVisit">Last Visit</SelectItem>
+                            <SelectContent className="rounded-xl border-gray-100 shadow-lg">
+                                <SelectItem value="recent" className="rounded-lg">Most Recent</SelectItem>
+                                <SelectItem value="name" className="rounded-lg">Name (A-Z)</SelectItem>
+                                <SelectItem value="lastVisit" className="rounded-lg">Last Visit</SelectItem>
                             </SelectContent>
                         </Select>
 
-                        <div className="text-sm text-muted-foreground">
-                            {filteredPatients.length} of {patients.length} patients
+                        <div className="text-[13px] font-medium text-gray-400 pl-2 border-l border-gray-200/50">
+                            <span className="text-gray-900 font-bold">{filteredPatients.length}</span> of {patients.length}
                         </div>
                     </div>
                 </div>

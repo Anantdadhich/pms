@@ -414,3 +414,40 @@ export async function getMonthlyComparisonData(clinicId: string) {
 
     return chartData
 }
+
+export async function getRecentMessages(clinicId: string) {
+    const messages = await prisma.notification.findMany({
+        where: { clinicId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: {
+            patient: { select: { firstName: true, lastName: true } }
+        }
+    })
+    
+    return messages.map(msg => ({
+        id: msg.id,
+        recipient: msg.patient ? `${msg.patient.firstName} ${msg.patient.lastName}` : msg.recipient,
+        message: msg.message,
+        time: msg.createdAt.toISOString(),
+        status: msg.status
+    }))
+}
+
+export async function getAllMessages(clinicId: string) {
+    const messages = await prisma.notification.findMany({
+        where: { clinicId },
+        orderBy: { createdAt: "desc" },
+        include: {
+            patient: { select: { firstName: true, lastName: true } }
+        }
+    })
+    
+    return messages.map(msg => ({
+        id: msg.id,
+        recipient: msg.patient ? `${msg.patient.firstName} ${msg.patient.lastName}` : msg.recipient,
+        message: msg.message,
+        time: msg.createdAt.toISOString(),
+        status: msg.status
+    }))
+}

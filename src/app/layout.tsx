@@ -42,6 +42,8 @@ export const metadata: Metadata = {
 
 }
 
+import { TooltipProvider } from "@/components/ui/tooltip"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -55,7 +57,9 @@ export default function RootLayout({
         >
           <QueryProvider>
             <PatientProvider>
-              {children}
+              <TooltipProvider delayDuration={0}>
+                {children}
+              </TooltipProvider>
             </PatientProvider>
           </QueryProvider>
         </body>

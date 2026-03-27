@@ -31,24 +31,34 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis
                             dataKey="name"
-                            className="text-xs"
-                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                            className="text-[12px]"
+                            tick={{ fill: "#6b7280" }}
+                            axisLine={false}
+                            tickLine={false}
+                            dy={10}
                         />
                         <YAxis
-                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                            tick={{ fill: "#6b7280" }}
                             tickFormatter={(value) => formatCurrency(value)}
+                            className="text-[12px]"
+                            axisLine={false}
+                            tickLine={false}
+                            dx={-10}
                         />
                         <Tooltip
+                            cursor={{ fill: '#f3f4f6' }}
                             content={({ active, payload }) => {
                                 if (active && payload && payload.length) {
                                     return (
-                                        <div className="rounded-lg border bg-background p-3 shadow-lg">
-                                            <div className="font-semibold">{payload[0].payload.name}</div>
-                                            <div className="text-sm text-muted-foreground mt-1">
-                                                Revenue: {formatCurrency(payload[0].value as number)}
+                                        <div className="rounded-xl border border-gray-100 bg-white/95 backdrop-blur-sm p-4 shadow-xl">
+                                            <div className="font-semibold text-gray-900 mb-2">{payload[0].payload.name}</div>
+                                            <div className="text-[13px] text-gray-600 flex justify-between gap-4">
+                                                <span>Revenue:</span>
+                                                <span className="font-medium text-gray-900">{formatCurrency(payload[0].value as number)}</span>
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                Count: {payload[0].payload.count} treatments
+                                            <div className="text-[13px] text-gray-600 flex justify-between gap-4 mt-1">
+                                                <span>Count:</span>
+                                                <span className="font-medium text-gray-900">{payload[0].payload.count} treatments</span>
                                             </div>
                                         </div>
                                     )
@@ -58,8 +68,8 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
                         />
                         <Bar
                             dataKey="revenue"
-                            fill="hsl(var(--primary))"
-                            radius={[4, 4, 0, 0]}
+                            fill="#0ea5e9"
+                            radius={[6, 6, 0, 0]}
                         />
                     </BarChart>
                 </ResponsiveContainer>

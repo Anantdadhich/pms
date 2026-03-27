@@ -47,7 +47,7 @@ export async function updateClinicSettings(clinicId: string, data: {
     }
 
     revalidatePath("/settings")
-    revalidatePath("/")
+    revalidatePath("/dashboard")
 
     return { success: true }
 }

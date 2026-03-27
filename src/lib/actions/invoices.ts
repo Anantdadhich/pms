@@ -139,7 +139,7 @@ export async function createInvoice(clinicId: string, data: CreateInvoiceValues)
     })
 
     revalidatePath("/billing")
-    revalidatePath("/") // Dashboard
+    revalidatePath("/dashboard") // Dashboard
     return serializeInvoice(invoice)
 }
 
@@ -181,7 +181,7 @@ export async function recordPayment(data: PaymentFormValues) {
     }
 
     revalidatePath("/billing")
-    revalidatePath("/") // Dashboard
+    revalidatePath("/dashboard") // Dashboard
     return {
         ...payment,
         amount: Number(payment.amount),
@@ -292,7 +292,7 @@ export async function updateInvoice(
 
     revalidatePath("/billing")
     revalidatePath(`/billing/${invoiceId}`)
-    revalidatePath("/")
+    revalidatePath("/dashboard")
     return serializeInvoice(invoice)
 }
 
@@ -356,7 +356,7 @@ export async function updateInvoiceItems(
 
     revalidatePath("/billing")
     revalidatePath(`/billing/${invoiceId}`)
-    revalidatePath("/")
+    revalidatePath("/dashboard")
     return serializeInvoice(invoice)
 }
 
@@ -377,6 +377,6 @@ export async function deleteInvoice(invoiceId: string) {
     })
 
     revalidatePath("/billing")
-    revalidatePath("/")
+    revalidatePath("/dashboard")
     return { success: true, id: invoice.id }
 }

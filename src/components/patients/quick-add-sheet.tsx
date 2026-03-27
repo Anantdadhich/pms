@@ -42,14 +42,18 @@ export function QuickAddPatientSheet({
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="sm:max-w-lg overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle>{defaultValues ? "Edit Patient" : "Add New Patient"}</SheetTitle>
-                    <SheetDescription>
-                        {defaultValues ? "Update patient details below." : "Fill in the patient details below. Required fields are marked with *."}
-                    </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6">
+            <SheetContent className="sm:max-w-xl overflow-y-auto bg-white/70 backdrop-blur-3xl border-l border-white/60 shadow-[-8px_0_32px_rgba(0,0,0,0.05)] p-0">
+                <div className="px-8 py-6 border-b border-gray-100/50 bg-white/40 sticky top-0 z-10">
+                    <SheetHeader>
+                        <SheetTitle className="text-2xl font-bold text-gray-900 tracking-tight">
+                            {defaultValues ? "Edit Patient" : "Add New Patient"}
+                        </SheetTitle>
+                        <SheetDescription className="text-gray-500 font-medium">
+                            {defaultValues ? "Update patient details below." : "Fill in the patient details below. Required fields are marked with *."}
+                        </SheetDescription>
+                    </SheetHeader>
+                </div>
+                <div className="p-8">
                     <PatientForm
                         clinicId={clinicId}
                         defaultValues={defaultValues}

@@ -24,16 +24,16 @@ export function AppointmentStatusChart({ data }: AppointmentStatusChartProps) {
             <CardContent>
                 <div className="space-y-4">
                     {data.map((item) => (
-                        <div key={item.name} className="space-y-1">
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="font-medium">{item.name}</span>
-                                <span className="text-muted-foreground">
+                        <div key={item.name} className="space-y-1.5 border border-gray-100/50 p-3 rounded-xl bg-gray-50/30">
+                            <div className="flex items-center justify-between text-[13px]">
+                                <span className="font-semibold text-gray-800">{item.name}</span>
+                                <span className="text-gray-500 font-medium">
                                     {item.value} ({Math.round((item.value / total) * 100)}%)
                                 </span>
                             </div>
-                            <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                            <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden shadow-inner">
                                 <div
-                                    className={`h-full ${item.color}`}
+                                    className={`h-full ${item.color} shadow-sm`}
                                     style={{ width: `${(item.value / total) * 100}%` }}
                                 />
                             </div>

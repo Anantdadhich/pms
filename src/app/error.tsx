@@ -41,7 +41,7 @@ export default function GlobalError({
                                 Try Again
                             </Button>
                             <Button variant="outline" asChild>
-                                <Link href="/">Go to Dashboard</Link>
+                                <Link href="/dashboard">Go to Dashboard</Link>
                             </Button>
                         </div>
 

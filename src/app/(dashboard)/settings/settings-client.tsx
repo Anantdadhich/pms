@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { updateClinicSettings } from "@/lib/actions/settings"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { ClinicQrGenerator } from "@/components/settings/clinic-qr-generator"
 
 interface SettingsClientProps {
     clinicId: string
@@ -50,6 +51,7 @@ export function SettingsClient({ clinicId, initialSettings }: SettingsClientProp
 
     return (
         <div className="p-6 space-y-6">
+            <ClinicQrGenerator clinicId={clinicId} />
             <Card>
                 <CardHeader>
                     <CardTitle>Clinic Information</CardTitle>

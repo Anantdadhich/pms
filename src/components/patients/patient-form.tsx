@@ -154,78 +154,83 @@ export function PatientForm({
     }
 
     return (
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5 pb-6">
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
+                    <Label htmlFor="firstName" className="text-gray-700 font-semibold text-[13px]">First Name <span className="text-red-500">*</span></Label>
                     <Input
                         id="firstName"
                         placeholder="John"
+                        className="h-11 rounded-xl bg-white/60 border-gray-200/60 focus:bg-white transition-all shadow-sm focus-visible:ring-cyan-500/20 px-4"
                         {...register("firstName")}
                     />
                     {errors.firstName && (
-                        <p className="text-sm text-destructive">{errors.firstName.message as string}</p>
+                        <p className="text-[12px] font-medium text-red-500 mt-1">{errors.firstName.message as string}</p>
                     )}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Label htmlFor="lastName" className="text-gray-700 font-semibold text-[13px]">Last Name <span className="text-red-500">*</span></Label>
                     <Input
                         id="lastName"
                         placeholder="Doe"
+                        className="h-11 rounded-xl bg-white/60 border-gray-200/60 focus:bg-white transition-all shadow-sm focus-visible:ring-cyan-500/20 px-4"
                         {...register("lastName")}
                     />
                     {errors.lastName && (
-                        <p className="text-sm text-destructive">{errors.lastName.message as string}</p>
+                        <p className="text-[12px] font-medium text-red-500 mt-1">{errors.lastName.message as string}</p>
                     )}
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Label htmlFor="phone" className="text-gray-700 font-semibold text-[13px]">Phone Number <span className="text-red-500">*</span></Label>
                     <Input
                         id="phone"
                         placeholder="+91 98765 43210"
+                        className="h-11 rounded-xl bg-white/60 border-gray-200/60 focus:bg-white transition-all shadow-sm focus-visible:ring-cyan-500/20 px-4"
                         {...register("phone")}
                     />
                     {errors.phone && (
-                        <p className="text-sm text-destructive">{errors.phone.message as string}</p>
+                        <p className="text-[12px] font-medium text-red-500 mt-1">{errors.phone.message as string}</p>
                     )}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-gray-700 font-semibold text-[13px]">Email Address</Label>
                     <Input
                         id="email"
                         type="email"
                         placeholder="john@example.com"
+                        className="h-11 rounded-xl bg-white/60 border-gray-200/60 focus:bg-white transition-all shadow-sm focus-visible:ring-cyan-500/20 px-4"
                         {...register("email")}
                     />
                     {errors.email && (
-                        <p className="text-sm text-destructive">{errors.email.message as string}</p>
+                        <p className="text-[12px] font-medium text-red-500 mt-1">{errors.email.message as string}</p>
                     )}
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                    <Label htmlFor="dateOfBirth" className="text-gray-700 font-semibold text-[13px]">Date of Birth <span className="text-red-500">*</span></Label>
                     <Input
                         id="dateOfBirth"
                         type="date"
+                        className="h-11 rounded-xl bg-white/60 border-gray-200/60 focus:bg-white transition-all shadow-sm focus-visible:ring-cyan-500/20 px-4"
                         {...register("dateOfBirth")}
                     />
                     {errors.dateOfBirth && (
-                        <p className="text-sm text-destructive">{errors.dateOfBirth.message as string}</p>
+                        <p className="text-[12px] font-medium text-red-500 mt-1">{errors.dateOfBirth.message as string}</p>
                     )}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
+                    <Label htmlFor="gender" className="text-gray-700 font-semibold text-[13px]">Gender</Label>
                     <select
                         id="gender"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex h-11 w-full rounded-xl border border-gray-200/60 bg-white/60 px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/20 shadow-sm transition-all focus:bg-white hover:bg-white/80"
                         {...register("gender")}
                     >
                         <option value="">Select gender</option>
@@ -237,34 +242,35 @@ export function PatientForm({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address" className="text-gray-700 font-semibold text-[13px]">Address (Optional)</Label>
                 <Input
                     id="address"
                     placeholder="123 Main Street, City"
+                    className="h-11 rounded-xl bg-white/60 border-gray-200/60 focus:bg-white transition-all shadow-sm focus-visible:ring-cyan-500/20 px-4"
                     {...register("address")}
                 />
             </div>
 
             {/* Service Selection with Dropdown */}
-            <div className="space-y-2">
-                <Label>Reason for Visit / Services</Label>
+            <div className="space-y-2 relative">
+                <Label className="text-gray-700 font-semibold text-[13px]">Reason for Visit / Services</Label>
                 <div className="relative">
                     <button
                         type="button"
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex h-11 w-full items-center justify-between rounded-xl border border-gray-200/60 bg-white/60 px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/20 shadow-sm transition-all hover:bg-white/80"
                     >
-                        <span className="text-muted-foreground">
+                        <span className="text-gray-500">
                             Select a service to add
                         </span>
-                        <ChevronDown className={`h-4 w-4 opacity-50 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {isDropdownOpen && treatments.length > 0 && (
-                        <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-[300px] overflow-auto">
+                        <div className="absolute z-50 mt-2 w-full rounded-[14px] border border-gray-100 bg-white shadow-xl max-h-[300px] overflow-auto py-1 animate-in fade-in slide-in-from-top-2">
                             {Object.entries(groupedTreatments).map(([category, categoryTreatments]) => (
                                 <div key={category}>
-                                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                                    <div className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50/50 sticky top-0 backdrop-blur-md">
                                         {category}
                                     </div>
                                     {categoryTreatments.map((treatment) => (
@@ -272,9 +278,9 @@ export function PatientForm({
                                             key={treatment.id}
                                             type="button"
                                             onClick={() => handleServiceSelect(treatment.name)}
-                                            className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                            className="flex w-full items-center px-4 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors cursor-pointer"
                                         >
-                                            <Check className={`mr-2 h-4 w-4 ${selectedNotes.includes(treatment.name) ? 'opacity-100' : 'opacity-0'}`} />
+                                            <Check className={`mr-3 h-4 w-4 ${selectedNotes.includes(treatment.name) ? 'text-cyan-600 opacity-100' : 'opacity-0'}`} />
                                             {treatment.name}
                                         </button>
                                     ))}
@@ -287,19 +293,28 @@ export function PatientForm({
                 {/* Notes textarea to show selected services and allow custom notes */}
                 <textarea
                     id="notes"
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-2"
-                    placeholder="Selected services will appear here. You can also add custom notes..."
+                    className="flex min-h-[100px] w-full rounded-xl border border-gray-200/60 bg-white/60 px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/20 shadow-sm transition-all focus:bg-white placeholder:text-gray-400 mt-3 resize-none"
+                    placeholder="Selected services will appear here. You can also add custom medical notes..."
                     {...register("notes")}
                 />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>
+            <div className="flex justify-end gap-3 pt-6 border-t border-gray-100/50 mt-6">
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={onCancel}
+                    className="rounded-xl h-11 px-5 font-bold border-gray-200/60 bg-white shadow-sm hover:bg-gray-50 text-gray-700"
+                >
                     Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="rounded-xl h-11 px-7 font-bold bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white shadow-md hover:shadow-lg transition-all border border-gray-800/50"
+                >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {defaultValues?.firstName ? "Update Patient" : "Add Patient"}
+                    {defaultValues?.firstName ? "Update Patient" : "Save Patient"}
                 </Button>
             </div>
         </form>

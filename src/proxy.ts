@@ -1,12 +1,22 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 const isPublicRoute = createRouteMatcher([
+    '/',
     '/sign-in(.*)',
     '/sign-up(.*)',
     '/api/webhooks(.*)',
+    '/api/cron(.*)',
+    '/public(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
+    const { userId } = await auth()
+
+    // Redirect authenticated users away from the public landing page directly to dashboard
+    if (userId && request.nextUrl.pathname === '/') {
+        return Response.redirect(new URL('/dashboard', request.url))
+    }
+
     if (!isPublicRoute(request)) {
         await auth.protect()
     }
