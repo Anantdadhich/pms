@@ -61,10 +61,7 @@ export const patientFormSchema = z.object({
 
     allergies: z.array(z.string()).optional(),
 
-    notes: z.string()
-        .max(1000, "Notes are too long")
-        .optional()
-        .transform((val) => val?.trim()),
+    notes: z.string().max(1000, "Notes are too long").optional(),
 })
 
 export type PatientFormValues = z.infer<typeof patientFormSchema>

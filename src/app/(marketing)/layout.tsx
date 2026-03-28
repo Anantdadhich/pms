@@ -5,7 +5,11 @@ import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Stethoscope, Menu, X, Twitter, Linkedin, Github, ShieldCheck } from "lucide-react";
 
-const NAV_LINKS = ['Features', 'Capabilities', 'Testimonials', 'Contact us'];
+const NAV_LINKS = [
+    { label: "What we offer", id: "features" },
+    { label: "How it helps", id: "capabilities" },
+    { label: "Questions", id: "faq" },
+] as const
 
 
 const BrandLogo = () => (
@@ -35,8 +39,12 @@ export default function MarketingLayout({
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-8">
                         {NAV_LINKS.map((link) => (
-                            <Link key={link} href={`#${link.toLowerCase()}`} className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                                {link}
+                            <Link
+                                key={link.id}
+                                href={`#${link.id}`}
+                                className="text-[14px] font-medium text-gray-600 transition-colors hover:text-gray-900"
+                            >
+                                {link.label}
                             </Link>
                         ))}
                     </nav>
@@ -76,12 +84,12 @@ export default function MarketingLayout({
                     <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-lg py-4 px-6 flex flex-col gap-4 animate-in slide-in-from-top-2">
                         {NAV_LINKS.map((link) => (
                             <Link
-                                key={link}
-                                href={`#${link.toLowerCase()}`}
-                                className="text-[15px] font-medium text-gray-600 py-2 border-b border-gray-50"
+                                key={link.id}
+                                href={`#${link.id}`}
+                                className="border-b border-gray-50 py-2 text-[15px] font-medium text-gray-600"
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                {link}
+                                {link.label}
                             </Link>
                         ))}
                         <div className="flex flex-col gap-3 mt-2">

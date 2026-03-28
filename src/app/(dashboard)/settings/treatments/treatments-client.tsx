@@ -130,75 +130,97 @@ export function TreatmentsClient({ initialTreatments, clinicId }: TreatmentsClie
     }
 
     return (
-        <div className="flex flex-col">
+        <div className="mx-auto flex min-h-0 max-w-4xl flex-col space-y-6">
             <Header
-                title="Treatment Catalog"
-                description="Manage your clinic's services and pricing"
+                title="Treatment catalog"
+                description="Services, standard fees, and durations for scheduling and billing."
+                clinicId={clinicId}
                 action={{
-                    label: "Add Treatment",
+                    label: "Add treatment",
                     onClick: () => handleOpenDialog(),
                 }}
             />
 
-            <div className="flex-1 p-6 space-y-6">
+            <div className="flex-1 space-y-6">
                 {treatments.length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground">
-                        No treatments found. Click 'Add Treatment' to get started.
+                    <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-gray-200/80 bg-white/50 px-8 py-16 text-center backdrop-blur-sm">
+                        <p className="text-[15px] font-semibold text-gray-900">No treatments yet</p>
+                        <p className="mt-2 max-w-md text-[14px] leading-relaxed text-gray-500">
+                            Add your first service so appointments and invoices can use consistent codes
+                            and pricing.
+                        </p>
+                        <Button
+                            className="mt-6 rounded-xl bg-gray-900 text-white hover:bg-gray-800"
+                            onClick={() => handleOpenDialog()}
+                        >
+                            Add treatment
+                        </Button>
                     </div>
                 )}
                 {Object.entries(groupedTreatments).map(([category, categoryTreatments]) => (
-                    <Card key={category}>
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-lg">{category}</CardTitle>
-                                <Badge variant="secondary">{categoryTreatments.length} services</Badge>
-                            </div>
+                    <Card
+                        key={category}
+                        className="overflow-hidden rounded-[20px] border border-white/60 bg-white/70 shadow-[0_4px_24px_rgba(0,0,0,0.02)] backdrop-blur-2xl"
+                    >
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100/50 py-4">
+                            <CardTitle className="text-[17px] font-bold text-gray-800">{category}</CardTitle>
+                            <Badge
+                                variant="secondary"
+                                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-none"
+                            >
+                                {categoryTreatments.length}{" "}
+                                {categoryTreatments.length === 1 ? "service" : "services"}
+                            </Badge>
                         </CardHeader>
-                        <CardContent>
-                            <div className="divide-y">
+                        <CardContent className="p-0">
+                            <div className="divide-y divide-gray-100/50">
                                 {categoryTreatments.map((treatment) => (
                                     <div
                                         key={treatment.id}
-                                        className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                                        className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-gray-50/50 sm:flex-row sm:items-center sm:justify-between"
                                     >
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 {treatment.code && (
-                                                    <span className="font-mono text-xs text-muted-foreground">
+                                                    <span className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-[11px] font-medium text-gray-600">
                                                         {treatment.code}
                                                     </span>
                                                 )}
-                                                <span className="font-medium">{treatment.name}</span>
+                                                <span className="text-[15px] font-semibold text-gray-900">
+                                                    {treatment.name}
+                                                </span>
                                             </div>
                                             {treatment.description && (
-                                                <p className="text-sm text-muted-foreground mt-0.5">
+                                                <p className="mt-1 text-[13px] leading-relaxed text-gray-500">
                                                     {treatment.description}
                                                 </p>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            {treatment.duration && (
-                                                <span className="text-sm text-muted-foreground">
+                                        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+                                            {treatment.duration != null && treatment.duration > 0 && (
+                                                <span className="text-[13px] font-medium text-gray-500 tabular-nums">
                                                     {treatment.duration} min
                                                 </span>
                                             )}
-                                            <span className="font-semibold text-primary">
+                                            <span className="text-[15px] font-bold tabular-nums text-gray-900">
                                                 {formatCurrency(treatment.standardCost)}
                                             </span>
-                                            <div className="flex gap-1">
+                                            <div className="flex items-center gap-0.5">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8"
+                                                    className="h-9 w-9 rounded-xl text-gray-600 hover:bg-white hover:text-gray-900"
                                                     onClick={() => handleOpenDialog(treatment)}
+                                                    aria-label="Edit treatment"
                                                 >
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                                    className="h-9 w-9 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
                                                     onClick={() => handleDelete(treatment.id)}
+                                                    aria-label="Delete treatment"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -214,7 +236,7 @@ export function TreatmentsClient({ initialTreatments, clinicId }: TreatmentsClie
 
             {/* Add/Edit Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent>
+                <DialogContent className="rounded-2xl sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>
                             {editingTreatment ? "Edit Treatment" : "Add New Treatment"}

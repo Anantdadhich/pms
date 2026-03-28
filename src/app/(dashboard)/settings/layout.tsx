@@ -2,20 +2,27 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Header } from "@/components/layout/header"
 import { cn } from "@/lib/utils"
-import { Settings, Stethoscope, Users, Building2, Bell } from "lucide-react"
+import { Settings, Stethoscope, QrCode } from "lucide-react"
 
 const settingsNav = [
     {
         title: "General",
         href: "/settings",
         icon: Settings,
+        description: "Clinic profile & preferences",
     },
     {
-        title: "Treatment Catalog",
+        title: "Treatment catalog",
         href: "/settings/treatments",
         icon: Stethoscope,
+        description: "Services, codes, and pricing",
+    },
+    {
+        title: "Patient self-registration",
+        href: "/settings/patient-intake",
+        icon: QrCode,
+        description: "QR code & intake link",
     },
 ]
 
@@ -27,39 +34,66 @@ export default function SettingsLayout({
     const pathname = usePathname()
 
     return (
-        <div className="flex flex-col h-full">
-            <Header title="Settings" description="Manage your clinic settings" />
-
-            <div className="flex flex-1 overflow-hidden">
-                {/* Settings Sidebar */}
-                <nav className="w-64 border-r bg-muted/30 p-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:gap-10">
+            <aside className="shrink-0 lg:w-64">
+                <nav
+                    className="rounded-[20px] border border-white/60 bg-white/70 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.03)] backdrop-blur-2xl lg:sticky lg:top-4"
+                    aria-label="Settings sections"
+                >
+                    <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                        Configure
+                    </p>
                     <div className="space-y-1">
                         {settingsNav.map((item) => {
-                            const isActive = pathname === item.href
+                            const isActive =
+                                item.href === "/settings"
+                                    ? pathname === "/settings"
+                                    : pathname === item.href || pathname.startsWith(`${item.href}/`)
                             return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                        "relative flex items-start gap-3 rounded-[14px] px-3 py-2.5 text-left transition-all",
                                         isActive
-                                            ? "bg-primary text-primary-foreground"
-                                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            ? "bg-slate-900 text-white shadow-md shadow-slate-900/10"
+                                            : "text-slate-600 hover:bg-slate-100/90 hover:text-slate-900"
                                     )}
                                 >
-                                    <item.icon className="h-4 w-4" />
-                                    {item.title}
+                                    {isActive && (
+                                        <span
+                                            className="absolute inset-y-2 left-1 w-1 rounded-full bg-cyan-400"
+                                            aria-hidden
+                                        />
+                                    )}
+                                    <item.icon
+                                        className={cn(
+                                            "ml-1 mt-0.5 h-4 w-4 shrink-0",
+                                            isActive ? "text-cyan-300" : "text-slate-400"
+                                        )}
+                                        strokeWidth={2}
+                                    />
+                                    <span className="min-w-0">
+                                        <span className="block text-[14px] font-semibold leading-tight">
+                                            {item.title}
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                "mt-0.5 block text-[12px] leading-snug",
+                                                isActive ? "text-white/75" : "text-slate-400"
+                                            )}
+                                        >
+                                            {item.description}
+                                        </span>
+                                    </span>
                                 </Link>
                             )
                         })}
                     </div>
                 </nav>
+            </aside>
 
-                {/* Settings Content */}
-                <div className="flex-1 overflow-auto">
-                    {children}
-                </div>
-            </div>
+            <div className="min-w-0 flex-1">{children}</div>
         </div>
     )
 }

@@ -23,7 +23,7 @@ export function Header({ title, description, children, action, clinicId }: Heade
     const { state, isMobile } = useSidebar()
 
     return (
-        <header className="flex flex-col md:flex-row md:h-[72px] md:items-center justify-between px-6 py-4 md:py-0 mb-8 rounded-[24px] bg-white/60 backdrop-blur-2xl border border-white shadow-[0_8px_32px_rgba(0,0,0,0.03)] mx-1 mt-2 gap-4 md:gap-0">
+        <header className="mx-0 mt-0 flex flex-col justify-between gap-4 rounded-[24px] border border-white bg-white/60 px-5 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.03)] backdrop-blur-2xl md:h-[72px] md:flex-row md:items-center md:gap-0 md:py-0 md:pl-6 md:pr-6">
             <div className="flex items-center gap-4">
                 {(state === "collapsed" || isMobile) && (
                     <SidebarTrigger className="h-10 w-10 text-gray-500 hover:text-gray-900 bg-white/80 hover:bg-white shadow-sm border border-gray-200/50 rounded-xl transition-all" />

@@ -15,19 +15,27 @@ interface TopServicesChartProps {
 
 export function TopServicesChart({ data }: TopServicesChartProps) {
     return (
-        <Card className="lg:col-span-4">
-            <CardHeader>
+        <Card className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/60 bg-white/70 shadow-[0_4px_24px_rgba(0,0,0,0.02)] backdrop-blur-2xl">
+            <CardHeader className="shrink-0 border-b border-gray-100/50 pb-4">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle>Top Services</CardTitle>
-                        <CardDescription>Most revenue-generating treatments</CardDescription>
+                    <div className="space-y-1">
+                        <CardTitle className="text-[17px] font-bold text-gray-900">Top services</CardTitle>
+                        <CardDescription className="text-[14px] text-gray-500">
+                            Treatments on invoices with the highest revenue
+                        </CardDescription>
                     </div>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <TrendingUp className="h-4 w-4 shrink-0 text-gray-400" />
                 </div>
             </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={data}>
+            <CardContent className="min-h-0 flex-1 pt-6">
+                {!data?.length ? (
+                    <div className="flex items-center justify-center text-center text-[14px] text-gray-400" style={{ height: 292 }}>
+                        When you create invoices with line items, your top services will appear here.
+                    </div>
+                ) : (
+                <div className="h-[292px] w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis
                             dataKey="name"
@@ -68,11 +76,13 @@ export function TopServicesChart({ data }: TopServicesChartProps) {
                         />
                         <Bar
                             dataKey="revenue"
-                            fill="#0ea5e9"
+                            fill="#9333ea"
                             radius={[6, 6, 0, 0]}
                         />
                     </BarChart>
                 </ResponsiveContainer>
+                </div>
+                )}
             </CardContent>
         </Card>
     )

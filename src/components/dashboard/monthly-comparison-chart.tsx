@@ -16,18 +16,19 @@ interface MonthlyComparisonChartProps {
 
 export function MonthlyComparisonChart({ data, currentYear = new Date().getFullYear() }: MonthlyComparisonChartProps) {
     return (
-        <Card className="lg:col-span-3">
-            <CardHeader>
+        <Card className="flex min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/60 bg-white/70 shadow-[0_4px_24px_rgba(0,0,0,0.02)] backdrop-blur-2xl">
+            <CardHeader className="shrink-0 border-b border-gray-100/50 pb-4">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle>Monthly Comparison</CardTitle>
-                        <CardDescription>This year vs last year</CardDescription>
+                    <div className="space-y-1">
+                        <CardTitle className="text-[17px] font-bold text-gray-900">Monthly comparison</CardTitle>
+                        <CardDescription className="text-[14px] text-gray-500">Revenue paid this year vs last year</CardDescription>
                     </div>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
                 </div>
             </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+            <CardContent className="min-h-0 w-full min-w-0 pt-6">
+                <div className="h-[292px] w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis
@@ -68,24 +69,25 @@ export function MonthlyComparisonChart({ data, currentYear = new Date().getFullY
                         <Line
                             type="monotone"
                             dataKey="thisYear"
-                            stroke="#0ea5e9"
+                            stroke="#c2410c"
                             strokeWidth={3}
                             name={`${currentYear}`}
-                            dot={{ fill: "#0ea5e9", r: 4, strokeWidth: 0 }}
-                            activeDot={{ r: 6, stroke: "#0ea5e9", strokeWidth: 2, fill: "white" }}
+                            dot={{ fill: "#c2410c", r: 4, strokeWidth: 0 }}
+                            activeDot={{ r: 6, stroke: "#c2410c", strokeWidth: 2, fill: "white" }}
                         />
                         <Line
                             type="monotone"
                             dataKey="lastYear"
-                            stroke="#94a3b8"
+                            stroke="#78716c"
                             strokeWidth={3}
                             strokeDasharray="6 6"
                             name={`${currentYear - 1}`}
-                            dot={{ fill: "#94a3b8", r: 4, strokeWidth: 0 }}
-                            activeDot={{ r: 6, stroke: "#94a3b8", strokeWidth: 2, fill: "white" }}
+                            dot={{ fill: "#78716c", r: 4, strokeWidth: 0 }}
+                            activeDot={{ r: 6, stroke: "#78716c", strokeWidth: 2, fill: "white" }}
                         />
                     </LineChart>
                 </ResponsiveContainer>
+                </div>
             </CardContent>
         </Card>
     )

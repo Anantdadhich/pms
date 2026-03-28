@@ -74,17 +74,17 @@ export default async function DashboardPage() {
     ])
 
     return (
-        <div className="flex flex-col">
+        <div className="flex min-h-0 flex-1 flex-col gap-6">
             <Header
                 title="Hello, Dental Pro"
                 description={`Welcome back, ${user.firstName}. Detailed information about your clinic's health.`}
                 clinicId={clinicId}
             />
 
-            <div className="flex-1 space-y-6 px-6 pb-6">
-                <div className="grid gap-6 lg:grid-cols-3">
+            <div className="flex min-h-0 flex-1 flex-col space-y-6">
+                <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
                     {/* LEFT MAIN COLUMN: 2/3 width */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="min-w-0 space-y-6 lg:col-span-2">
                         
                         {/* Welcome Banner */}
                         <WelcomeBanner userName={`${user.firstName} ${user.lastName}`} />
@@ -178,27 +178,24 @@ export default async function DashboardPage() {
                             <ScheduleWidget appointments={upcomingAppointments} />
                         </div>
 
-                        {/* Moved Analytics: Patient Growth, Top Services, Revenue */}
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-6 border-t border-gray-100/50">
-                            <div className="lg:col-span-3">
-                                <PatientGrowthChart weeklyData={patientGrowthDataWeekly} monthlyData={patientGrowthDataMonthly} />
+                        {/* Analytics: aligned chart row */}
+                        <section className="space-y-6 border-t border-gray-100/50 pt-6">
+                            <PatientGrowthChart weeklyData={patientGrowthDataWeekly} monthlyData={patientGrowthDataMonthly} />
+                            <div className="grid grid-cols-1 items-stretch gap-2 xl:grid-cols-12">
+                                <div className="min-w-0 xl:col-span-7">
+                                    <TopServicesChart data={topServicesData} />
+                                </div>
+                                <div className="min-w-0 xl:col-span-5">
+                                    <RevenueChart weeklyData={revenueDataWeekly} monthlyData={revenueDataMonthly} />
+                                </div>
                             </div>
-                            <div className="lg:col-span-2">
-                                <TopServicesChart data={topServicesData} />
-                            </div>
-                            <div className="lg:col-span-1">
-                                <RevenueChart weeklyData={revenueDataWeekly} monthlyData={revenueDataMonthly} />
-                            </div>
-                        </div>
+                        </section>
                     </div>
 
-                    {/* RIGHT SIDEBAR COLUMN: 1/3 width */}
-                    <div className="lg:col-span-1 space-y-6">
+                    {/* RIGHT SIDEBAR COLUMN: timeline & comparison */}
+                    <div className="min-w-0 space-y-6 lg:col-span-1">
                         
-                        {/* Overall Health Condition -> Monthly Comparison (Line Chart like mountains) */}
-                        <div className="[&>div]:lg:col-span-1">
-                            <MonthlyComparisonChart data={monthlyComparisonData} currentYear={new Date().getFullYear()} />
-                        </div>
+                        <MonthlyComparisonChart data={monthlyComparisonData} currentYear={new Date().getFullYear()} />
 
                         {/* Appointment Timeline */}
                         <Card className="bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[20px] flex flex-col max-h-[400px]">

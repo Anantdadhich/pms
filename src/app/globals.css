@@ -53,15 +53,15 @@
   /* Radius */
   --radius: 0.5rem;
 
-  /* Sidebar */
-  --sidebar-background: 222 47% 11%;
-  --sidebar-foreground: 210 20% 96%;
-  --sidebar-primary: 210 100% 55%;
+  /* Sidebar (light shell — matches dashboard glass) */
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 188 94% 42%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217 33% 17%;
-  --sidebar-accent-foreground: 210 20% 96%;
-  --sidebar-border: 217 33% 17%;
-  --sidebar-ring: 210 100% 55%;
+  --sidebar-accent: 210 40% 96%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-border: 214 32% 91%;
+  --sidebar-ring: 188 94% 42%;
 }
 
 .dark {

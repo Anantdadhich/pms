@@ -24,8 +24,9 @@ export async function createPublicPatient(clinicId: string, data: PatientFormVal
 
         // Default to 'Consultation' as requested by user
         let notesText = "Initial visit type: Consultation."
-        if (validatedData.notes) {
-            notesText += `\nPatient Notes: ${validatedData.notes}`
+        const trimmedNotes = validatedData.notes?.trim()
+        if (trimmedNotes) {
+            notesText += `\nPatient Notes: ${trimmedNotes}`
         }
 
         const patient = await prisma.patient.create({
