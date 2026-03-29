@@ -8,9 +8,10 @@ interface CircularProgressStatCardProps {
     value: ReactNode
     progressValue: number
     label: string
+    description?: string
 }
 
-export function CircularProgressStatCard({ title, value, progressValue, label }: CircularProgressStatCardProps) {
+export function CircularProgressStatCard({ title, value, progressValue, label, description }: CircularProgressStatCardProps) {
     const radius = 24
     const circumference = 2 * Math.PI * radius
     const strokeDashoffset = circumference - (progressValue / 100) * circumference
@@ -20,7 +21,7 @@ export function CircularProgressStatCard({ title, value, progressValue, label }:
             <div className="flex flex-col gap-1">
                 <span className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">{title}</span>
                 <span className="text-[28px] font-bold text-gray-900 leading-none mt-1">{value}</span>
-                <span className="text-[12px] text-gray-400 font-medium">Weekly Report</span>
+                <span className="text-[12px] text-gray-400 font-medium">{description || "Analysis"}</span>
             </div>
             
             <div className="relative flex items-center justify-center w-16 h-16">

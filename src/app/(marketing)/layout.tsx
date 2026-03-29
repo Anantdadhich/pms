@@ -59,7 +59,7 @@ export default function MarketingLayout({
                             </SignInButton>
                             <SignUpButton mode="modal">
                                 <button className="bg-black text-white text-[14px] font-medium px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm">
-                                    Start Free Trial
+                                    Start
                                 </button>
                             </SignUpButton>
                         </SignedOut>
@@ -129,49 +129,50 @@ export default function MarketingLayout({
                         <div className="lg:col-span-2 flex flex-col items-start gap-6">
                             <BrandLogo />
                             <p className="text-[14px] text-gray-500 leading-relaxed max-w-sm">
-                                The modern practice management system built to streamline scheduling, automate reminders, and elevate the patient experience for forward-thinking clinics.
+                                The easiest and smartest way to manage your dental clinic. Handle appointments, patients, and billing without any computer stress.
                             </p>
-                            <div className="flex items-center gap-4 mt-2">
-                                <a href="#" className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-500 hover:border-blue-500 transition-colors">
-                                    <Twitter size={16} />
-                                </a>
-                                <a href="#" className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-700 hover:border-blue-700 transition-colors">
-                                    <Linkedin size={16} />
-                                </a>
-                                <a href="#" className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:border-gray-900 transition-colors">
-                                    <Github size={16} />
-                                </a>
+
+                        </div>
+
+                        {/* Quick Links */}
+                        <div className="flex flex-col gap-6">
+                            <h4 className="text-[15px] font-bold text-gray-900">What we do</h4>
+                            <ul className="flex flex-col gap-3">
+                                <li><Link href="#features" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Digital Calendar</Link></li>
+                                <li><Link href="#features" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Patient Records</Link></li>
+                                <li><Link href="#features" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">QR Check-in</Link></li>
+                                <li><Link href="#features" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Easy Billing</Link></li>
+                            </ul>
+                        </div>
+
+                        {/* Support */}
+                        <div className="flex flex-col gap-6">
+                            <h4 className="text-[15px] font-bold text-gray-900">Get Help</h4>
+                            <ul className="flex flex-col gap-3">
+                                <li><Link href="#faq" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Common Questions</Link></li>
+                                <li><Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Talk to Us</Link></li>
+                                <li><Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Tutorials</Link></li>
+                            </ul>
+                        </div>
+
+                        {/* Contact */}
+                        <div className="flex flex-col gap-6">
+                            <h4 className="text-[15px] font-bold text-gray-900">Contact</h4>
+                            <div className="flex flex-col gap-4">
+                                <div>
+                                    <p className="text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                                    <p className="text-[14px] text-gray-700 font-medium">arpit@comacks.com</p>
+                                </div>
+                                <div>
+                                    <p className="text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-1">Clinic Support</p>
+                                    <p className="text-[14px] text-gray-700 font-medium">+91 99111 33114</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Product Links */}
-                        <div className="flex flex-col gap-4">
-                            <span className="font-semibold text-gray-900 text-[13px] uppercase tracking-wider">Product</span>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Features</Link>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Integrations</Link>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Pricing</Link>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Changelog</Link>
-                        </div>
 
-                        {/* Company Links */}
-                        <div className="flex flex-col gap-4">
-                            <span className="font-semibold text-gray-900 text-[13px] uppercase tracking-wider">Company</span>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">About Us</Link>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Careers</Link>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Blog</Link>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Contact</Link>
-                        </div>
 
-                        {/* Legal & Trust Links */}
-                        <div className="flex flex-col gap-4">
-                            <span className="font-semibold text-gray-900 text-[13px] uppercase tracking-wider">Legal</span>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Privacy Policy</Link>
-                            <Link href="#" className="text-[14px] text-gray-500 hover:text-gray-900 transition-colors">Terms of Service</Link>
-                            <div className="mt-2 flex items-center gap-2 text-[13px] font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full inline-flex w-max">
-                                <ShieldCheck size={14} />
-                                HIPAA Compliant
-                            </div>
-                        </div>
+
                     </div>
 
                     <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -182,6 +183,10 @@ export default function MarketingLayout({
                             <span className="flex items-center gap-2 text-[13px] text-gray-400">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                                 All systems operational
+                            </span>
+                            <span className="hidden md:block w-px h-4 bg-gray-200"></span>
+                            <span className="text-[13px] text-gray-400">
+                                Powered by <Link href="https://comacks.com" target="_blank" className="font-medium text-gray-600 hover:text-gray-900 transition-colors">Comacks</Link>
                             </span>
                         </div>
                     </div>

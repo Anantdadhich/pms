@@ -59,7 +59,7 @@ export function ClinicQrGenerator({ clinicId }: { clinicId: string }) {
 <body>
   <div class="sheet">
     <h1>Scan to register</h1>
-    <p>Patients can open your secure intake form by scanning this code with their phone camera.</p>
+<p>Scan this code with your phone camera to open the form.</p>
     ${svgData.replace(/^<\?xml[^>]*>\s*/i, "")}
     <div class="url">${intakeUrl}</div>
   </div>

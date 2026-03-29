@@ -83,35 +83,50 @@ export async function getDashboardStats(clinicId: string) {
     const lastRevenueValue = lastMonthRevenueResult._sum.amount ? Number(lastMonthRevenueResult._sum.amount) : 0
     const revenueChange = lastRevenueValue === 0 ? 100 : ((revenueValue - lastRevenueValue) / lastRevenueValue) * 100
 
+    // Calculate dynamic percentages for progress circles
+    const [totalInvoices] = await Promise.all([
+        prisma.invoice.count({ where: { clinicId } })
+    ])
+
+    const patientGoal = 50 // Example goal
+    const patientProgress = Math.min(Math.round((totalPatients / patientGoal) * 100), 100)
+    const apptProgress = appointmentsToday === 0 ? 0 : Math.round((appointmentsCompletedToday / appointmentsToday) * 100)
+    const revenueProgress = Math.min(Math.max(Math.round(revenueChange), 0), 100)
+    const pendingProgress = totalInvoices === 0 ? 0 : Math.round((pendingInvoices / totalInvoices) * 100)
+
     return [
         {
-            title: "Total Patients",
+            title: "Patients",
             value: totalPatients.toString(),
             change: "Total registered",
             trend: "neutral",
             description: "Active patients",
+            progress: patientProgress,
         },
         {
-            title: "Today's Appointments",
+            title: "Appts",
             value: appointmentsToday.toString(),
             change: `${appointmentsCompletedToday} completed`,
             trend: appointmentsCompletedToday > 0 ? "up" : "neutral",
             description: "Scheduled today",
+            progress: apptProgress,
         },
         {
-            title: "Total Revenue",
+            title: "Revenue",
             value: totalRevenueValue,
             isCurrency: true,
             change: `${revenueChange > 0 ? "+" : ""}${Math.round(revenueChange)}%`,
             trend: revenueChange > 0 ? "up" : revenueChange < 0 ? "down" : "neutral",
             description: "vs last month",
+            progress: revenueProgress,
         },
         {
-            title: "Pending Invoices",
+            title: "Pending",
             value: pendingInvoices.toString(),
             change: "Awaiting payment",
             trend: "neutral",
             description: "Outstanding",
+            progress: pendingProgress,
         },
     ]
 }

@@ -31,6 +31,7 @@ export default async function SettingsPage() {
 
     const initialSettings = {
         name: clinic.name,
+        doctorName: `${user.firstName} ${user.lastName}`.trim() || "",
         email: clinic.email || "",
         phone: clinic.phone || "",
         address: clinic.address || "",
@@ -40,5 +41,5 @@ export default async function SettingsPage() {
         invoicePrefix: settings?.invoicePrefix || "INV",
     }
 
-    return <SettingsClient clinicId={user.clinicId} initialSettings={initialSettings} />
+    return <SettingsClient clinicId={user.clinicId} userId={user.id} initialSettings={initialSettings} />
 }

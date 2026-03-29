@@ -110,8 +110,10 @@ export async function createAppointment(
 
     if (patientPhone) {
         const clinicName = appointment.clinic?.name || "our clinic";
+        const serviceName = validated.type || "consultation";
         const prettyDateTime = validated.scheduledAt.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-        const message = `Hi ${appointment.patient.firstName}, your appointment at ${clinicName} is confirmed for ${prettyDateTime}.`
+
+        const message = `Hi ${appointment.patient.firstName}, your ${serviceName} appointment at ${clinicName} is confirmed for ${prettyDateTime}.`;
 
 
         const notification = await prisma.notification.create({
@@ -152,7 +154,9 @@ export async function createAppointment(
             if (reminderTime > new Date()) {
                 const prettyTime = appointmentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const clinicName = appointment.clinic?.name || "our clinic";
-                const reminderMessage = `Hi ${appointment.patient.firstName}, this is a reminder for your appointment at ${clinicName} tomorrow at ${prettyTime}.`
+                const serviceName = validated.type || "consultation";
+
+                const reminderMessage = `Hi ${appointment.patient.firstName}, this is a reminder for your ${serviceName} appointment at ${clinicName} tomorrow at ${prettyTime}.`;
 
                 const job = await prisma.smsJob.create({
                     data: {

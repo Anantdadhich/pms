@@ -12,8 +12,10 @@ import { updateClinicSettings } from "@/lib/actions/settings"
 import { useToast } from "@/hooks/use-toast"
 interface SettingsClientProps {
     clinicId: string
+    userId: string
     initialSettings: {
         name: string
+        doctorName: string
         email: string
         phone: string
         address: string
@@ -50,7 +52,7 @@ function SectionIntro({
     )
 }
 
-export function SettingsClient({ clinicId, initialSettings }: SettingsClientProps) {
+export function SettingsClient({ clinicId, userId, initialSettings }: SettingsClientProps) {
     const [settings, setSettings] = useState(initialSettings)
     const [isSaving, setIsSaving] = useState(false)
     const { toast } = useToast()
@@ -58,7 +60,7 @@ export function SettingsClient({ clinicId, initialSettings }: SettingsClientProp
     const handleSave = async () => {
         setIsSaving(true)
         try {
-            await updateClinicSettings(clinicId, settings)
+            await updateClinicSettings(clinicId, userId, settings)
             toast({
                 title: "Changes saved",
                 description: "Clinic details and preferences were updated.",
@@ -93,6 +95,24 @@ export function SettingsClient({ clinicId, initialSettings }: SettingsClientProp
                     />
                     <div className="space-y-6 p-6 md:p-8 md:pt-2">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label
+                                    htmlFor="doctorName"
+                                    className="text-[12px] font-bold uppercase tracking-wider text-gray-600"
+                                >
+                                    Doctor Name / User Name
+                                </Label>
+                                <div className="relative">
+                                    <Building2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <Input
+                                        id="doctorName"
+                                        value={settings.doctorName}
+                                        onChange={(e) => setSettings({ ...settings, doctorName: e.target.value })}
+                                        placeholder="e.g. Dr. John Doe"
+                                        className="h-12 rounded-xl border-gray-200/60 bg-white/80 pl-11 shadow-sm transition-all focus-visible:bg-white focus-visible:ring-cyan-500/20"
+                                    />
+                                </div>
+                            </div>
                             <div className="space-y-2">
                                 <Label
                                     htmlFor="name"

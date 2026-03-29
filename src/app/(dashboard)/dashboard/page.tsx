@@ -76,8 +76,8 @@ export default async function DashboardPage() {
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-6">
             <Header
-                title="Hello, Dental Pro"
-                description={`Welcome back, ${user.firstName}. Detailed information about your clinic's health.`}
+                title="Dashboard Overview"
+                description={`Welcome back, Dr ${user.firstName}. Detailed information about your clinic's health.`}
                 clinicId={clinicId}
             />
 
@@ -85,42 +85,28 @@ export default async function DashboardPage() {
                 <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
                     {/* LEFT MAIN COLUMN: 2/3 width */}
                     <div className="min-w-0 space-y-6 lg:col-span-2">
-                        
+
                         {/* Welcome Banner */}
                         <WelcomeBanner userName={`${user.firstName} ${user.lastName}`} />
 
                         {/* 4 Stat Cards */}
                         <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                            <CircularProgressStatCard 
-                                title="Patients" 
-                                value={stats[0].value} 
-                                progressValue={68} 
-                                label="68%" 
-                            />
-                            <CircularProgressStatCard 
-                                title="Appts" 
-                                value={stats[1].value} 
-                                progressValue={81} 
-                                label="81%" 
-                            />
-                            <CircularProgressStatCard 
-                                title="Revenue" 
-                                value={stats[2].change.includes("%") ? stats[2].change : "+15%"} 
-                                progressValue={45} 
-                                label="45%" 
-                            />
-                            <CircularProgressStatCard 
-                                title="Pending" 
-                                value={stats[3].value} 
-                                progressValue={23} 
-                                label="23%" 
-                            />
+                            {stats.map((stat: any, index: number) => (
+                                <CircularProgressStatCard
+                                    key={index}
+                                    title={stat.title}
+                                    value={stat.isCurrency ? `₹${Number(stat.value).toLocaleString()}` : stat.value}
+                                    progressValue={stat.progress || 0}
+                                    label={`${stat.progress || 0}%`}
+                                    description={stat.description}
+                                />
+                            ))}
                         </div>
 
                         {/* Doctor's List (Upcoming Appointments Table) */}
                         <Card className="overflow-hidden bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[20px]">
                             <CardHeader className="flex flex-row items-center justify-between py-4 border-b border-gray-100/50">
-                                <CardTitle className="text-[17px] font-bold text-gray-800">Doctor's List</CardTitle>
+                                <CardTitle className="text-[17px] font-bold text-gray-800">Clinical Appointments</CardTitle>
                                 <Link href="/schedule" className="text-[13px] text-cyan-600 font-medium hover:text-cyan-700">
                                     See All ›
                                 </Link>
@@ -131,7 +117,7 @@ export default async function DashboardPage() {
                                         <thead className="bg-gray-50/50 border-b border-gray-100/50">
                                             <tr>
                                                 <th className="px-5 py-3 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Doctor Name</th>
-                                                <th className="px-5 py-3 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Diagnosis</th>
+                                                <th className="px-5 py-3 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Treatment</th>
                                                 <th className="px-5 py-3 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
                                                 <th className="px-5 py-3 text-left text-[12px] font-bold text-gray-400 uppercase tracking-wider">Date</th>
                                             </tr>
@@ -147,7 +133,9 @@ export default async function DashboardPage() {
                                                                 {apt.doctor?.firstName?.[0] || 'D'}{apt.doctor?.lastName?.[0] || 'R'}
                                                             </div>
                                                             <div>
-                                                                <div className="text-[14px] font-bold text-gray-900">Dr. {apt.doctor?.lastName || 'Assigned'}</div>
+                                                                <div className="text-[14px] font-bold text-gray-900">
+                                                                    Dr. {apt.doctor?.firstName ? `${apt.doctor.firstName} ${apt.doctor.lastName || ''}`.trim() : 'Assigned'}
+                                                                </div>
                                                                 <div className="text-[11px] text-gray-400 font-medium">{apt.patient.firstName} {apt.patient.lastName}</div>
                                                             </div>
                                                         </div>
@@ -161,7 +149,7 @@ export default async function DashboardPage() {
                                                         </Badge>
                                                     </td>
                                                     <td className="px-5 py-4 whitespace-nowrap text-[13px] font-medium text-gray-500">
-                                                        {format(new Date(apt.scheduledAt), "MMM dd, yyyy")} <br/>
+                                                        {format(new Date(apt.scheduledAt), "MMM dd, yyyy")} <br />
                                                         <span className="text-[11px] text-gray-400">{format(new Date(apt.scheduledAt), "HH:mm")}</span>
                                                     </td>
                                                 </tr>
@@ -177,28 +165,15 @@ export default async function DashboardPage() {
                             <MessagesWidget messages={recentMessages} />
                             <ScheduleWidget appointments={upcomingAppointments} />
                         </div>
-
-                        {/* Analytics: aligned chart row */}
-                        <section className="space-y-6 border-t border-gray-100/50 pt-6">
-                            <PatientGrowthChart weeklyData={patientGrowthDataWeekly} monthlyData={patientGrowthDataMonthly} />
-                            <div className="grid grid-cols-1 items-stretch gap-2 xl:grid-cols-12">
-                                <div className="min-w-0 xl:col-span-7">
-                                    <TopServicesChart data={topServicesData} />
-                                </div>
-                                <div className="min-w-0 xl:col-span-5">
-                                    <RevenueChart weeklyData={revenueDataWeekly} monthlyData={revenueDataMonthly} />
-                                </div>
-                            </div>
-                        </section>
                     </div>
 
                     {/* RIGHT SIDEBAR COLUMN: timeline & comparison */}
                     <div className="min-w-0 space-y-6 lg:col-span-1">
-                        
-                        <MonthlyComparisonChart data={monthlyComparisonData} currentYear={new Date().getFullYear()} />
+
+                        <PatientGrowthChart weeklyData={patientGrowthDataWeekly} monthlyData={patientGrowthDataMonthly} />
 
                         {/* Appointment Timeline */}
-                        <Card className="bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[20px] flex flex-col max-h-[400px]">
+                        <Card className="bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[20px] flex flex-col h-[520px]">
                             <CardHeader className="flex flex-row items-center justify-between pb-3 shrink-0">
                                 <CardTitle className="text-[16px]">Appointment Timeline</CardTitle>
                                 <span className="text-[12px] text-cyan-600 font-medium cursor-pointer">See All ›</span>
@@ -228,6 +203,20 @@ export default async function DashboardPage() {
 
                     </div>
                 </div>
+
+                {/* FULL WIDTH BOTTOM ROW: Analytics */}
+                <section className="space-y-6 pt-2">
+                    <MonthlyComparisonChart data={monthlyComparisonData} currentYear={new Date().getFullYear()} />
+
+                    <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2">
+                        <div className="min-w-0">
+                            <TopServicesChart data={topServicesData} />
+                        </div>
+                        <div className="min-w-0">
+                            <RevenueChart weeklyData={revenueDataWeekly} monthlyData={revenueDataMonthly} />
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     )

@@ -3,8 +3,9 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
-export async function updateClinicSettings(clinicId: string, data: {
+export async function updateClinicSettings(clinicId: string, userId: string, data: {
     name: string
+    doctorName?: string
     email?: string
     phone?: string
     address?: string
@@ -23,6 +24,20 @@ export async function updateClinicSettings(clinicId: string, data: {
             address: data.address,
         }
     })
+
+    if (data.doctorName) {
+        // Assume doctorName format could be "Dr. FirstName LastName"
+        // Let's just update both to the same or split it if needed, or update firstName only.
+        // Easiest is to set firstName and lastName to empty for simplicity if splitting is hard
+        const parts = data.doctorName.trim().split(" ")
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                firstName: parts[0] || "",
+                lastName: parts.slice(1).join(" "),
+            }
+        })
+    }
 
     // Try to upsert clinic settings, but don't fail if table doesn't exist
     try {
